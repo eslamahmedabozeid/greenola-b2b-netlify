@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greenola B2B — Admin Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&family=Cairo:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    // Fallback if jsdelivr fails
+    window.addEventListener('error', function(e) {
+      if (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('supabase')) {
+        console.warn('Primary Supabase CDN failed, loading fallback…');
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+        document.head.appendChild(s);
+      }
+    }, true);
+  </script>
+  
+  <style>
+    :root {
+      --green-primary: #24B25D;
+      --green-dark: #004E42;
+      --green-medium: #17765D;
+      --cream: #FFFEDC;
+      --mustard: #EDB02C;
+      --orange: #EE7D46;
+      --ink: #0E1F1B;
+      --ink-soft: #4A5C56;
+      --ink-mute: #8B9A93;
+      --line: #E8EFE9;
+      --bg: #FAFAF6;
+      --danger: #DC2626;
+      --radius-md: 12px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #F5F7F2;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    
+    /* HEADER */
+    .topbar {
+      background: linear-gradient(135deg, var(--green-dark), #003329);
+      color: #fff;
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px -2px rgba(0,78,66,0.4);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar h1 {
+      font-size: 20px; font-weight: 800;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .topbar .brand-mark {
+      width: 28px; height: 28px;
+      background: var(--mustard);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green-dark); font-weight: 800;
+    }
+    .topbar .badge {
+      background: rgba(255,254,220,0.15);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .conn-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 600;
+      padding: 6px 12px;
+      background: rgba(255,254,220,0.1);
+      border-radius: 999px;
+    }
+    .conn-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #888;
+    }
+    .conn-dot.live { background: #4ADE80; box-shadow: 0 0 0 3px rgba(74,222,128,0.2); }
+    .conn-dot.demo { background: var(--mustard); box-shadow: 0 0 0 3px rgba(237,176,44,0.2); }
+    
+    /* TABS */
+    .tabs {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 0 32px;
+      display: flex; gap: 4px;
+      position: sticky; top: 60px; z-index: 99;
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 14px 18px;
+      border: none; background: transparent;
+      font-family: inherit; font-size: 16px; font-weight: 600;
+      color: var(--ink-soft); cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s var(--ease);
+      white-space: nowrap;
+    }
+    .tab:hover { color: var(--green-dark); }
+    .tab.active {
+      color: var(--green-primary);
+      border-bottom-color: var(--green-primary);
+    }
+    .tab .count {
+      background: var(--line); color: var(--ink-soft);
+      padding: 2px 7px; border-radius: 999px;
+      font-size: 13px; font-weight: 700;
+      margin-left: 6px;
+    }
+    .tab.active .count { background: var(--green-primary); color: #fff; }
+    
+    /* CONTAINER */
+    .container {
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .panel {
+      background: #fff;
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 16px -4px rgba(14,31,27,0.08);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-header h2 {
+      font-size: 20px; font-weight: 800; color: var(--green-dark);
+    }
+    .panel-header .actions {
+      display: flex; gap: 8px;
+    }
+    
+    /* BUTTONS */
+    .btn {
+      padding: 9px 16px;
+      border: none; border-radius: 8px;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.2s var(--ease);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green-primary), #1FA052);
+      color: #fff;
+      box-shadow: 0 4px 12px -2px rgba(36,178,93,0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px -2px rgba(36,178,93,0.5);
+    }
+    .btn-secondary {
+      background: #fff; color: var(--ink);
+      border: 1.5px solid var(--line);
+    }
+    .btn-secondary:hover { border-color: var(--green-primary); color: var(--green-primary); }
+    .btn-ghost {
+      background: transparent; color: var(--ink-soft);
+    }
+    .btn-ghost:hover { background: var(--line); }
+    .btn-danger {
+      background: transparent; color: var(--danger);
+      border: 1.5px solid #FCA5A5;
+    }
+    .btn-danger:hover { background: #FEF2F2; }
+    .btn-sm { padding: 6px 12px; font-size: 14px; }
+    
+    /* Editable Prices table */
+    .prices-edit-table th .th-sub {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-mute);
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+      text-transform: none;
+    }
+    .price-edit-input {
+      width: 70px;
+      padding: 6px 8px;
+      border: 1.5px solid var(--line);
+      border-radius: 6px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+      transition: all 0.18s var(--ease);
+      background: #fff;
+    }
+    .price-edit-input:focus {
+      outline: none;
+      border-color: var(--green-primary);
+      box-shadow: 0 0 0 3px rgba(36, 178, 93, 0.12);
+    }
+    .price-edit-input.dirty {
+      border-color: #F0A500;
+      background: #FFFBEC;
+    }
+    .price-edit-input.invalid {
+      border-color: #DC2626;
+      background: #FEF2F2;
+    }
+    .price-edit-input::-webkit-inner-spin-button,
+    .price-edit-input::-webkit-outer-spin-button {
+      -webkit-appearance: none; margin: 0;
+    }
+    .price-edit-input { -moz-appearance: textfield; }
+    
+    .price-total {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      color: var(--green-medium, #1FA052);
+      transition: color 0.18s var(--ease);
+    }
+    .price-total.dirty {
+      color: #B97A0E;
+      font-weight: 800;
+    }
+    
+    .price-row-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .price-row-status.clean {
+      background: #F0F4EE;
+      color: #6B7B6F;
+    }
+    .price-row-status.dirty {
+      background: #FFF6D9;
+      color: #8A6500;
+    }
+    .price-row-status.saving {
+      background: #E0F0FF;
+      color: #0F5F8E;
+    }
+    .price-row-status.saved {
+      background: rgba(36, 178, 93, 0.15);
+      color: var(--green-primary);
+    }
+    .price-row-status.error {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+    .price-row-status .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .prices-edit-hint {
+      padding: 14px 24px;
+      font-size: 14px;
+      color: var(--ink-mute);
+      border-top: 1px solid var(--line);
+      line-height: 1.55;
+    }
+    .prices-edit-hint strong { color: var(--ink); font-weight: 700; }
+    
+    /* TABLE */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 13px; font-weight: 700;
+      color: var(--ink-mute);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #FAFAF6;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px; color: var(--ink);
+      vertical-align: middle;
+    }
+    tr:hover td { background: rgba(36,178,93,0.03); }
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--ink-mute);
+      font-size: 16px;
+    }
+    .empty-state svg {
+      width: 56px; height: 56px;
+      color: var(--line);
+      margin-bottom: 12px;
+    }
+    
+    /* PILLS */
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 700;
+    }
+    .pill-green { background: rgba(36,178,93,0.12); color: #1A9B4D; }
+    .pill-mustard { background: rgba(237,176,44,0.15); color: #B8861E; }
+    .pill-red { background: rgba(200,58,58,0.12); color: #C83A3A; }
+    .pill-grey { background: var(--line); color: var(--ink-soft); }
+    .pill-red { background: #FEF2F2; color: var(--danger); }
+    
+    /* MODAL */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(14,31,27,0.5);
+      backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 580px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 60px -20px rgba(0,78,66,0.4);
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 {
+      font-size: 20px; font-weight: 800; color: var(--green-dark);
+    }
+    .modal-close {
+      width: 32px; height: 32px;
+      border: none; background: transparent;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-soft);
+    }
+    .modal-close:hover { background: var(--line); }
+    .modal-body {
+      padding: 24px;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--line);
+      display: flex; justify-content: flex-end; gap: 8px;
+      background: #FAFAF6;
+    }
+    
+    /* FORM */
+    .field {
+      margin-bottom: 16px;
+    }
+    .field label {
+      display: block;
+      font-size: 14px; font-weight: 700;
+      color: var(--ink); margin-bottom: 6px;
+    }
+    .field .hint {
+      font-size: 13px; color: var(--ink-mute);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      font-family: inherit; font-size: 16px;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+      transition: all 0.2s var(--ease);
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      border-color: var(--green-primary);
+      box-shadow: 0 0 0 3px rgba(36,178,93,0.1);
+    }
+    .textarea { resize: vertical; min-height: 70px; }
+    
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 18px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-section-title:first-child { margin-top: 0; }
+    
+    .switch {
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer;
+      padding: 12px 14px;
+      background: #FAFAF6;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      width: 100%;
+      user-select: none;
+    }
+    .switch:hover { border-color: var(--green-primary); }
+    .switch input[type="checkbox"] {
+      position: absolute; opacity: 0; pointer-events: none;
+      width: 0; height: 0;
+    }
+    .switch-track {
+      display: inline-block;
+      width: 40px; height: 24px;
+      background: #CBD5D0;
+      border-radius: 999px;
+      position: relative;
+      transition: background 0.25s var(--ease);
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .switch-track::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s var(--ease), background 0.25s var(--ease);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .switch input[type="checkbox"]:checked ~ .switch-track {
+      background: var(--green-primary);
+    }
+    .switch input[type="checkbox"]:checked ~ .switch-track::after {
+      transform: translateX(16px);
+    }
+    .switch-label {
+      font-size: 15px; font-weight: 600; color: var(--ink); flex: 1;
+      line-height: 1.4;
+    }
+    .switch-label small {
+      display: block; font-size: 13px; color: var(--ink-mute);
+      font-weight: 500; margin-top: 2px;
+    }
+    
+    /* PRICE CALCULATOR */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+    .calc-input-pane, .calc-output-pane {
+      background: #fff;
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+    .calc-output-pane {
+      background: linear-gradient(135deg, #003329, var(--green-dark));
+      color: #fff;
+    }
+    .calc-output-pane h3 {
+      font-size: 16px; font-weight: 700;
+      color: rgba(255,254,220,0.7);
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .calc-line {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0;
+      font-size: 16px;
+      border-bottom: 1px solid rgba(255,254,220,0.12);
+    }
+    .calc-line .label { color: rgba(255,254,220,0.65); font-weight: 500; }
+    .calc-line .value {
+      font-family: 'Cairo', 'Inter', sans-serif;
+      font-weight: 800; color: var(--cream);
+      font-size: 17px;
+    }
+    .calc-line.discount .value { color: #FCA5A5; }
+    .calc-line.subsidy .value { color: var(--mustard); }
+    .calc-final {
+      margin-top: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--green-primary), #1FA052);
+      border-radius: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .calc-final .label { font-size: 14px; font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.05em; }
+    .calc-final .value { font-family: 'Cairo', 'Inter', sans-serif; font-size: 26px; font-weight: 800; }
+    
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--green-dark); color: #fff;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-weight: 600; font-size: 15px;
+      box-shadow: 0 10px 30px -8px rgba(0,78,66,0.4);
+      transition: transform 0.3s var(--ease);
+      z-index: 2000;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--danger); }
+    
+    /* SETUP WALL */
+    .setup-banner {
+      background: linear-gradient(135deg, #FFFCEB, #FFF7E0);
+      border: 1px solid rgba(237,176,44,0.3);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .setup-banner.hidden { display: none; }
+    .setup-banner .icon {
+      width: 40px; height: 40px;
+      background: var(--mustard);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; flex-shrink: 0;
+    }
+    .setup-banner h3 {
+      font-size: 16px; font-weight: 800; color: #B8861E;
+      margin-bottom: 2px;
+    }
+    .setup-banner p {
+      font-size: 14.5px; color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 2px 8px -2px rgba(14,31,27,0.06);
+    }
+    .stat-card .label {
+      font-size: 13px; font-weight: 700;
+      color: var(--ink-mute);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .stat-card .value {
+      font-family: 'Cairo', sans-serif;
+      font-size: 26px; font-weight: 800;
+      color: var(--green-dark);
+    }
+    .stat-card .delta {
+      font-size: 13px; font-weight: 600; color: var(--green-primary);
+      margin-top: 2px;
+    }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h1>
+      <span class="brand-mark">G</span>
+      Greenola B2B Admin
+      <span class="badge">SALES TOOLS</span>
+    </h1>
+    <div class="conn-status" id="connStatus">
+      <span class="conn-dot demo" id="connDot"></span>
+      <span id="connLabel">Demo mode</span>
+    </div>
+  </div>
+  
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="deals">Company Deals <span class="count" id="dealsCount">0</span></button>
+    <button class="tab" data-tab="leads">Captured Leads <span class="count" id="leadsCount">0</span></button>
+    <button class="tab" data-tab="calc">Price Calculator</button>
+    <button class="tab" data-tab="prices">Base Prices</button>
+    <button class="tab" data-tab="photos">Photos <span class="count" id="photosCount">0</span></button>
+    <button class="tab" data-tab="meals">Menu <span class="count" id="mealsCount">0</span></button>
+  </div>
+  
+  <!-- CONTAINER -->
+  <div class="container">
+    
+    <!-- Setup banner (shown when no Supabase config) -->
+    <div class="setup-banner" id="setupBanner">
+      <div class="icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M3 12a9 9 0 119 9 9 9 0 01-9-9z"/></svg>
+      </div>
+      <div style="flex: 1;">
+        <h3>Connect to Supabase to enable live mode</h3>
+        <p>Currently showing demo data. Click <strong>Connect</strong> to enter your Supabase URL + anon key, or run the SQL migration first.</p>
+      </div>
+      <button class="btn btn-primary" id="connectBtn">Connect</button>
+    </div>
+    
+    <!-- DEALS TAB -->
+    <div class="tab-pane" id="pane-deals">
+      
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Active Deals</div>
+          <div class="value" id="statActiveDeals">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Avg Subsidy</div>
+          <div class="value" id="statAvgSubsidy">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Subsidized Deals</div>
+          <div class="value" id="statSubsidized">—</div>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Company Deals</h2>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" id="refreshDealsBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+              Refresh
+            </button>
+            <button class="btn btn-primary" id="newDealBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Deal
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Code</th>
+                <th>Company covers</th>
+                <th>Usage</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="dealsTable">
+              <tr><td colspan="6" class="empty-state">Loading deals…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- LEADS TAB -->
+    <div class="tab-pane hidden" id="pane-leads">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Total Leads</div>
+          <div class="value" id="statTotalLeads">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Today</div>
+          <div class="value" id="statTodayLeads">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Submitted Intent</div>
+          <div class="value" id="statIntents">—</div>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Captured Leads</h2>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" id="exportLeadsBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button class="btn btn-secondary btn-sm" id="refreshLeadsBtn">Refresh</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Company</th>
+                <th>Matched Deal</th>
+                <th>Plan / Days</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTable">
+              <tr><td colspan="6" class="empty-state">Loading leads…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CALCULATOR TAB -->
+    <div class="tab-pane hidden" id="pane-calc">
+      <div class="panel">
+        <div class="panel-header"><h2>Price Calculator</h2></div>
+        <div style="padding: 24px;">
+          <div class="calc-grid">
+            <div class="calc-input-pane" style="background: #FAFAF6; border-radius: 12px; padding: 24px;">
+              <div class="field">
+                <label>Plan</label>
+                <select class="select" id="calcPlan">
+                  <option value="balanced">Balanced (متوازنة)</option>
+                  <option value="protein">High Protein (عالية البروتين)</option>
+                  <option value="lowcarb">Low Carb (منخفضة الكارب)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Meal Config</label>
+                <select class="select" id="calcConfig">
+                  <option value="lunch">Lunch only</option>
+                  <option value="lunch_snack">Lunch + Snack</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Duration (days/month)</label>
+                <select class="select" id="calcDuration">
+                  <option value="20">20 days</option>
+                  <option value="24">24 days</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Apply Deal</label>
+                <select class="select" id="calcDeal">
+                  <option value="">No deal (default)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="calc-output-pane">
+              <h3>Pricing breakdown</h3>
+              <div class="calc-line"><span class="label">Price per day</span><span class="value" id="calcPricePerDay">—</span></div>
+              <div class="calc-line"><span class="label">Days per month</span><span class="value" id="calcDays">—</span></div>
+              <div class="calc-line"><span class="label">Base total (real)</span><span class="value" id="calcBase">—</span></div>
+              <div class="calc-line discount" id="calcDiscountRow"><span class="label">Plan-screen theater</span><span class="value" id="calcDiscount">—</span></div>
+              <div class="calc-line" style="display:none;"><span class="label">After discount</span><span class="value" id="calcAfterDiscount">—</span></div>
+              <div class="calc-line subsidy" id="calcSubsidyRow"><span class="label">Company covers (fixed)</span><span class="value" id="calcSubsidy">—</span></div>
+              <div class="calc-final">
+                <span class="label">User pays at checkout</span>
+                <span class="value" id="calcUserPays">—</span>
+              </div>
+              <p style="margin-top:14px; font-size:13px; color:rgba(255,254,220,0.55); line-height:1.5;">
+                Subsidy line will <span id="calcShowBreakdown">be hidden</span>. The 40% theater is always shown on the plan-selection screen for users with a redeemed code.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- BASE PRICES TAB -->
+    <div class="tab-pane hidden" id="pane-prices">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Base Meal Pricing</h2>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" id="pricesResetBtn" type="button" disabled>Reset changes</button>
+            <button class="btn btn-primary btn-sm" id="pricesSaveAllBtn" type="button" disabled>Save all changes</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="prices-edit-table">
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Lunch only<br><span class="th-sub">SAR / day · editable</span></th>
+                <th>Lunch + Snack<br><span class="th-sub">SAR / day · editable</span></th>
+                <th>20 days (Lunch)</th>
+                <th>24 days (Lunch)</th>
+                <th>20 days (L+S)</th>
+                <th>24 days (L+S)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="pricesTable">
+              <tr><td colspan="8" class="empty-state">Loading pricing…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prices-edit-hint">
+          <strong>Edit a cell</strong> to change the daily rate. Totals recalculate live. Click <strong>Save all changes</strong> to push edited rows to Supabase, or <strong>Reset changes</strong> to discard. Each row tracks its own dirty state.
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- PHOTOS TAB -->
+    <div class="tab-pane hidden" id="pane-photos">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Photos & Assets</h2>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" id="refreshPhotosBtn">Refresh</button>
+          </div>
+        </div>
+        <div style="padding: 24px;">
+          
+          <!-- Upload zone -->
+          <div id="dropzone" style="
+            border: 2.5px dashed var(--line);
+            border-radius: 14px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #FAFAF6;
+            transition: all 0.25s var(--ease);
+            cursor: pointer;
+            margin-bottom: 24px;
+          ">
+            <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green-medium)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px;">Drop photos here or click to browse</h3>
+            <p style="font-size: 15px; color: var(--ink-soft);">JPG, PNG, WebP up to 10 MB each. Multiple files supported.</p>
+          </div>
+          
+          <!-- Category selector for next upload -->
+          <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+            <label style="font-size: 15px; font-weight: 600; color: var(--ink);">Upload category:</label>
+            <select class="select" id="uploadCategory" style="width: auto; min-width: 160px;">
+              <option value="meal">Meal photo</option>
+              <option value="plan">Plan circular plate</option>
+              <option value="hero">Hero image</option>
+              <option value="icon">Icon</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <!-- Gallery -->
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--green-dark); margin-bottom: 14px;">Uploaded photos</h3>
+          <div id="photosGallery" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+          ">
+            <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--ink-mute); font-size: 15px;">
+              Loading…
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <!-- MENU TAB (placeholder, will populate when we build Screen 4) -->
+    <div class="tab-pane hidden" id="pane-meals">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Menu Items</h2>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" id="refreshMealsBtn">Refresh</button>
+            <button class="btn btn-primary btn-sm hidden" id="newMealBtn">+ New Meal</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Plans</th>
+                <th>Cal</th>
+                <th>P</th>
+                <th>C</th>
+                <th>F</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody id="mealsTable">
+              <tr><td colspan="9" class="empty-state">Loading meals…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding: 16px 24px; font-size: 14px; color: var(--ink-mute); border-top: 1px solid var(--line);">
+          To attach photos to meals: 1) Upload photo in <strong>Photos</strong> tab → 2) Copy the URL → 3) Paste into the meal record.
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- DEAL EDIT MODAL -->
+  <div class="modal-bg" id="dealModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="dealModalTitle">New Deal</h3>
+        <button class="modal-close" id="dealModalClose">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="dealId">
+        
+        <!-- ─── BASIC ─── -->
+        <div class="modal-section-title">Basics</div>
+        <div class="field">
+          <label>Company Name *</label>
+          <input class="input" id="dealName" placeholder="أرامكو السعودية" required>
+          <div class="hint">As it should appear to user. Arabic or English.</div>
+        </div>
+        
+        <div class="row-2">
+          <div class="field">
+            <label>Status</label>
+            <select class="select" id="dealStatus">
+              <option value="draft">Draft</option>
+              <option value="active" selected>Active</option>
+              <option value="paused">Paused</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Contact Person</label>
+            <input class="input" id="dealContact" placeholder="HR name">
+          </div>
+        </div>
+        
+        <!-- ─── CODE & USAGE ─── -->
+        <div class="modal-section-title">Employee Code <small style="color:var(--ink-mute);font-weight:400;">— how employees identify themselves</small></div>
+        
+        <div class="field">
+          <label>Code *</label>
+          <input class="input" id="dealCode" placeholder="aramco25" autocapitalize="characters" style="font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+          <div class="hint">No spaces. Case-insensitive. Employees enter this on Page 1 to unlock the deal.</div>
+        </div>
+        
+        <div class="row-2">
+          <div class="field">
+            <label>Usage Cap</label>
+            <input class="input" id="dealUsageCap" type="number" min="0" step="1" placeholder="50">
+            <div class="hint">Max redemptions. Leave blank for unlimited.</div>
+          </div>
+          <div class="field">
+            <label>Used So Far</label>
+            <input class="input" id="dealUsageCount" type="number" readonly style="background:var(--line-soft, #fafafa);color:var(--ink-soft);">
+            <div class="hint"><button type="button" class="btn-link" id="dealResetCount" style="background:none;border:none;color:var(--green-primary, #1A9B4D);cursor:pointer;font-size:13px;padding:0;text-decoration:underline;font-family:inherit;">Reset to 0</button> (use sparingly)</div>
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Code Expires (optional)</label>
+          <input class="input" id="dealCodeExpires" type="date">
+          <div class="hint">After this date, the code stops working even if cap not reached.</div>
+        </div>
+        
+        <!-- ─── PRICING ─── -->
+        <div class="modal-section-title">Company Subsidy <small style="color:var(--ink-mute);font-weight:400;">— how much the company covers per subscription</small></div>
+        
+        <div class="field">
+          <label>Fixed amount (SAR per subscription)</label>
+          <input class="input" id="dealFixedSubsidy" type="number" min="0" step="10" value="0" placeholder="200">
+          <div class="hint">One-time deduction taken off the user's total. Leave 0 if the company doesn't subsidize. Theater "before" price (≈40% off) is always shown to coded users — that's marketing only and doesn't affect the real charge.</div>
+        </div>
+        
+        <!-- Legacy fields preserved as hidden inputs so save payload doesn't break older RPC validators -->
+        <input type="hidden" id="dealDiscount" value="0">
+        <input type="hidden" id="dealSubsidy" value="0">
+        <input type="hidden" id="dealShowBreakdown" value="false">
+        
+        <!-- ─── DELIVERY ADDRESS ─── -->
+        <div class="modal-section-title">Locked Delivery Address <small style="color:var(--ink-mute);font-weight:400;">— shown on Address screen</small></div>
+        
+        <div class="field">
+          <label>Display Label</label>
+          <input class="input" id="dealAddrLabel" placeholder="أرامكو السعودية - مكتب الرياض">
+          <div class="hint">What employees see on the address card.</div>
+        </div>
+        
+        <div class="row-2">
+          <div class="field">
+            <label>Building</label>
+            <input class="input" id="dealAddrBuilding" placeholder="برج المملكة">
+          </div>
+          <div class="field">
+            <label>District</label>
+            <input class="input" id="dealAddrDistrict" placeholder="حي العليا">
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Landmark / Driver Note</label>
+          <input class="input" id="dealAddrLandmark" placeholder="بوابة الموظفين الرئيسية">
+        </div>
+        
+        <div class="field">
+          <label>Driver Instructions</label>
+          <input class="input" id="dealAddrDriver" placeholder="تسليم في الاستقبال — اطلب الأمن">
+        </div>
+        
+        <div class="row-2">
+          <div class="field">
+            <label>Latitude</label>
+            <input class="input" id="dealAddrLat" type="number" step="any" placeholder="24.7117">
+          </div>
+          <div class="field">
+            <label>Longitude</label>
+            <input class="input" id="dealAddrLng" type="number" step="any" placeholder="46.6753">
+          </div>
+        </div>
+        <div class="hint" style="margin:-8px 0 12px;">Tip: open Google Maps, right-click the building → click coordinates → paste here.</div>
+        
+        <!-- ─── EMAIL DOMAIN VERIFICATION (Phase 2 ready) ─── -->
+        <div class="modal-section-title">Email Domain Whitelist <small style="color:var(--ink-mute);font-weight:400;">— optional, Phase 2</small></div>
+        <div class="field">
+          <label>Verified Domains</label>
+          <input class="input" id="dealVerifiedDomains" placeholder="aramco.com, aramco.com.sa">
+          <div class="hint">Comma-separated. When implemented, only emails from these domains can redeem the code.</div>
+        </div>
+        
+        <!-- ─── INTERNAL ─── -->
+        <div class="modal-section-title">Internal</div>
+        <div class="field">
+          <label>Notes</label>
+          <textarea class="textarea" id="dealNotes" placeholder="For sales team only — not shown to user"></textarea>
+        </div>
+        
+        <!-- ─── REDEMPTIONS LOG (only shows when editing) ─── -->
+        <div id="dealRedemptionsSection" style="display:none;">
+          <div class="modal-section-title">Recent Redemptions <small style="color:var(--ink-mute);font-weight:400;">— last 20</small></div>
+          <div id="dealRedemptionsLog" style="font-size:14px;background:var(--line-soft,#fafafa);border-radius:8px;padding:10px;max-height:240px;overflow-y:auto;">
+            <div style="color:var(--ink-mute);text-align:center;padding:20px 0;">Loading…</div>
+          </div>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm hidden" id="dealDeleteBtn">Delete</button>
+        <span style="flex:1;"></span>
+        <button class="btn btn-ghost" id="dealCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="dealSaveBtn">Save Deal</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- CONNECT MODAL -->
+  <div class="modal-bg" id="connectModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <h3>Connect to Supabase</h3>
+        <button class="modal-close" id="connectModalClose">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:15px; color:var(--ink-soft); line-height:1.6; margin-bottom:18px;">
+          Get these from your Supabase project: <strong>Settings → API</strong>
+        </p>
+        <div class="field">
+          <label>Project URL</label>
+          <input class="input" id="connectUrl" placeholder="https://abc.supabase.co">
+        </div>
+        <div class="field">
+          <label>Anon Public Key</label>
+          <input class="input" id="connectKey" type="password" placeholder="eyJ...">
+          <div class="hint">Stored in your browser localStorage only. Never sent to Greenola.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="connectCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="connectSaveBtn">Connect</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ════════════════════════════════════════════════════════════
+    //  STATE
+    // ════════════════════════════════════════════════════════════
+    let sb = null;
+    let isLive = false;
+    let deals = [];
+    let leads = [];
+    let pricing = [];
+    
+    // Demo data (used when not connected)
+    const DEMO_DEALS = [
+      { id: 'demo-1', company_name: 'Demo Company', unique_code: 'demo', fixed_subsidy_sar: 0, status: 'active', internal_notes: 'Default demo deal' },
+      { id: 'demo-2', company_name: 'Aramco السعودية', unique_code: 'aramco', fixed_subsidy_sar: 200, status: 'active', internal_notes: 'Pilot deal — 200 SAR per subscription' },
+      { id: 'demo-3', company_name: 'STC', unique_code: 'stc', fixed_subsidy_sar: 500, status: 'active', internal_notes: 'Full coverage' },
+    ];
+    
+    const DEMO_LEADS = [
+      { id: 'l1', full_name: 'أحمد محمد', phone: '+966551234567', company_name: 'أرامكو', matched_company: 'Aramco السعودية', plan_type: 'protein', meal_config: 'lunch_snack', duration_days: 24, created_at: new Date().toISOString() },
+      { id: 'l2', full_name: 'Sara Khan', phone: '+966509876543', company_name: 'STC Solutions', matched_company: 'STC', plan_type: 'balanced', meal_config: 'lunch', duration_days: 20, created_at: new Date(Date.now()-86400000).toISOString() },
+    ];
+    
+    const DEMO_PRICING = [
+      { plan_type: 'balanced', meal_config: 'lunch', price_per_day: 25 },
+      { plan_type: 'balanced', meal_config: 'lunch_snack', price_per_day: 30 },
+      { plan_type: 'protein', meal_config: 'lunch', price_per_day: 30 },
+      { plan_type: 'protein', meal_config: 'lunch_snack', price_per_day: 35 },
+      { plan_type: 'lowcarb', meal_config: 'lunch', price_per_day: 25 },
+      { plan_type: 'lowcarb', meal_config: 'lunch_snack', price_per_day: 30 },
+    ];
+    
+    // ════════════════════════════════════════════════════════════
+    //  CONNECT
+    // ════════════════════════════════════════════════════════════
+    function loadStoredCreds() {
+      const url = localStorage.getItem('greenola_supabase_url');
+      const key = localStorage.getItem('greenola_supabase_key');
+      if (url && key) initSupabase(url, key);
+      else loadDemo();
+    }
+    
+    function initSupabase(url, key) {
+      try {
+        if (!window.supabase || !window.supabase.createClient) {
+          throw new Error('Supabase library not loaded. Check internet connection or try again.');
+        }
+        sb = window.supabase.createClient(url, key);
+        isLive = true;
+        document.getElementById('connDot').classList.remove('demo');
+        document.getElementById('connDot').classList.add('live');
+        document.getElementById('connLabel').textContent = 'Connected';
+        document.getElementById('setupBanner').classList.add('hidden');
+        loadAllData();
+        toast('Connected to Supabase ✓');
+      } catch (e) {
+        console.error('[Greenola Admin] Supabase init failed:', e);
+        toast('Connection failed: ' + (e.message || 'Unknown error'), true);
+        loadDemo();
+      }
+    }
+    
+    function loadDemo() {
+      isLive = false;
+      deals = [...DEMO_DEALS];
+      leads = [...DEMO_LEADS];
+      pricing = [...DEMO_PRICING];
+      document.getElementById('connDot').classList.add('demo');
+      document.getElementById('connDot').classList.remove('live');
+      document.getElementById('connLabel').textContent = 'Demo mode';
+      document.getElementById('setupBanner').classList.remove('hidden');
+      renderDeals(); renderLeads(); renderPricing(); populateDealDropdown();
+      computePrice();
+    }
+    
+    async function loadAllData() {
+      try {
+        const [dealsRes, leadsRes, pricingRes] = await Promise.all([
+          sb.from('company_deals').select('*').order('created_at', { ascending: false }),
+          sb.from('leads_with_deals').select('*').limit(200),
+          sb.from('meal_pricing').select('*').eq('active', true),
+        ]);
+        deals = dealsRes.data || [];
+        leads = leadsRes.data || [];
+        pricing = pricingRes.data || [];
+        renderDeals(); renderLeads(); renderPricing(); populateDealDropdown();
+        computePrice();
+      } catch (e) {
+        toast('Failed to load data: ' + e.message, true);
+      }
+    }
+    
+    // ════════════════════════════════════════════════════════════
+    //  RENDERING
+    // ════════════════════════════════════════════════════════════
+    function renderDeals() {
+      const tbody = document.getElementById('dealsTable');
+      document.getElementById('dealsCount').textContent = deals.length;
+      
+      if (!deals.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No deals yet. Click <strong>New Deal</strong> to add one.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = deals.map(d => {
+        const code = d.unique_code ? `<code style="background:var(--line);padding:2px 6px;border-radius:4px;font-size:13px;">${escapeHtml(d.unique_code)}</code>` : '<span style="color:var(--ink-mute)">—</span>';
+        
+        const fixedSub = parseFloat(d.fixed_subsidy_sar) || 0;
+        const subsidy = fixedSub > 0
+          ? `<span class="pill pill-green">${fixedSub} SAR</span>`
+          : '<span style="color:var(--ink-mute)">—</span>';
+        
+        // Usage column: visual cap-aware indicator
+        let usage;
+        if (!d.unique_code) {
+          usage = '<span style="color:var(--ink-mute)">no code</span>';
+        } else if (d.usage_cap == null) {
+          usage = `${d.usage_count || 0} / <span style="color:var(--ink-mute)">∞</span>`;
+        } else {
+          const used = d.usage_count || 0;
+          const cap = d.usage_cap;
+          const pct = cap > 0 ? Math.round((used / cap) * 100) : 0;
+          let bar;
+          if (used >= cap) bar = `<span class="pill pill-red">${used} / ${cap} · capped</span>`;
+          else if (pct >= 80) bar = `<span class="pill pill-mustard">${used} / ${cap}</span>`;
+          else bar = `<span class="pill pill-grey">${used} / ${cap}</span>`;
+          usage = bar;
+        }
+        
+        // Quick-action buttons inline with Edit
+        const shareBtn = d.unique_code
+          ? `<button class="btn btn-ghost btn-sm" title="Copy shareable link" onclick="copyShareLink('${d.id}', event)">🔗</button>`
+          : '';
+        
+        return `
+          <tr>
+            <td>
+              <strong>${escapeHtml(d.company_name)}</strong>
+              ${d.contact_person ? `<br><small style="color:var(--ink-mute)">${escapeHtml(d.contact_person)}</small>` : ''}
+            </td>
+            <td>${code}</td>
+            <td>${subsidy}</td>
+            <td>${usage}</td>
+            <td>${statusPill(d.status)}</td>
+            <td style="white-space:nowrap;">
+              ${shareBtn}
+              <button class="btn btn-ghost btn-sm" onclick="editDeal('${d.id}')">Edit</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Stats
+      const active = deals.filter(d => d.status === 'active');
+      document.getElementById('statActiveDeals').textContent = active.length;
+      const subsidized = active.filter(d => parseFloat(d.fixed_subsidy_sar) > 0);
+      document.getElementById('statSubsidized').textContent = subsidized.length;
+      const avgSub = subsidized.length 
+        ? Math.round(subsidized.reduce((s, d) => s + (parseFloat(d.fixed_subsidy_sar) || 0), 0) / subsidized.length)
+        : 0;
+      document.getElementById('statAvgSubsidy').textContent = avgSub > 0 ? avgSub + ' SAR' : '—';
+    }
+    
+    // Copy shareable link to clipboard
+    window.copyShareLink = (id, ev) => {
+      ev?.stopPropagation();
+      const deal = deals.find(d => d.id === id);
+      if (!deal?.unique_code) { toast('No code on this deal', true); return; }
+      // Build the link — uses the user app's base URL (assume same origin minus /admin/)
+      const base = window.location.origin;
+      const url = `${base}/?company=${encodeURIComponent(deal.company_name)}&code=${encodeURIComponent(deal.unique_code)}`;
+      navigator.clipboard?.writeText(url).then(
+        () => toast(`Link copied: ${url.length > 60 ? url.slice(0,60) + '…' : url}`),
+        () => prompt('Copy this link:', url)
+      );
+    };
+    
+    function renderLeads() {
+      const tbody = document.getElementById('leadsTable');
+      document.getElementById('leadsCount').textContent = leads.length;
+      
+      if (!leads.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads captured yet.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = leads.map(l => `
+        <tr>
+          <td><strong>${escapeHtml(l.full_name)}</strong></td>
+          <td><code style="font-size:13px;">${escapeHtml(l.phone)}</code></td>
+          <td>${escapeHtml(l.company_name)}</td>
+          <td>${l.matched_company ? `<span class="pill pill-green">${escapeHtml(l.matched_company)}</span>` : '<span class="pill pill-grey">No match</span>'}</td>
+          <td>${l.plan_type ? `${l.plan_type} / ${l.duration_days}d` : '—'}</td>
+          <td><small style="color:var(--ink-mute)">${formatDate(l.created_at)}</small></td>
+        </tr>
+      `).join('');
+      
+      document.getElementById('statTotalLeads').textContent = leads.length;
+      const today = new Date().toDateString();
+      document.getElementById('statTodayLeads').textContent = leads.filter(l => new Date(l.created_at).toDateString() === today).length;
+      document.getElementById('statIntents').textContent = leads.filter(l => l.plan_type).length;
+    }
+    
+    // ════════════════════════════════════════════════════════════
+    //  PRICES — EDITABLE MATRIX
+    // ════════════════════════════════════════════════════════════
+    // pricingDirty[`${plan}_${config}`] = newPriceNumber (only present if changed from server value)
+    let pricingDirty = {};
+    
+    function priceKey(plan, config) { return `${plan}_${config}`; }
+    
+    function renderPricing() {
+      const tbody = document.getElementById('pricesTable');
+      const planNames = { balanced: 'Balanced', protein: 'High Protein', lowcarb: 'Low Carb' };
+      
+      const rows = ['balanced', 'protein', 'lowcarb'].map(plan => {
+        const lunch = pricing.find(p => p.plan_type === plan && p.meal_config === 'lunch');
+        const lsnack = pricing.find(p => p.plan_type === plan && p.meal_config === 'lunch_snack');
+        const lp = lunch ? parseFloat(lunch.price_per_day) : 0;
+        const lsp = lsnack ? parseFloat(lsnack.price_per_day) : 0;
+        return `
+          <tr data-plan="${plan}">
+            <td><strong>${planNames[plan]}</strong></td>
+            <td>
+              <input type="number" min="0" step="0.5" inputmode="decimal"
+                class="price-edit-input"
+                data-plan="${plan}" data-config="lunch" data-original="${lp}"
+                value="${lp}">
+            </td>
+            <td>
+              <input type="number" min="0" step="0.5" inputmode="decimal"
+                class="price-edit-input"
+                data-plan="${plan}" data-config="lunch_snack" data-original="${lsp}"
+                value="${lsp}">
+            </td>
+            <td><span class="price-total" data-plan="${plan}" data-config="lunch" data-mult="20">${lp*20} SAR</span></td>
+            <td><span class="price-total" data-plan="${plan}" data-config="lunch" data-mult="24">${lp*24} SAR</span></td>
+            <td><span class="price-total" data-plan="${plan}" data-config="lunch_snack" data-mult="20">${lsp*20} SAR</span></td>
+            <td><span class="price-total" data-plan="${plan}" data-config="lunch_snack" data-mult="24">${lsp*24} SAR</span></td>
+            <td>
+              <span class="price-row-status clean" data-row-status data-plan="${plan}">
+                <span class="dot"></span><span class="label">No changes</span>
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      tbody.innerHTML = rows;
+      attachPricingListeners();
+      pricingDirty = {};
+      updatePricingToolbar();
+    }
+    
+    function attachPricingListeners() {
+      document.querySelectorAll('.price-edit-input').forEach(inp => {
+        inp.addEventListener('input', onPriceInputChange);
+        inp.addEventListener('blur', onPriceInputBlur);
+      });
+    }
+    
+    function onPriceInputChange(e) {
+      const inp = e.target;
+      const plan = inp.dataset.plan;
+      const config = inp.dataset.config;
+      const original = parseFloat(inp.dataset.original);
+      const raw = inp.value.trim();
+      const val = parseFloat(raw);
+      const key = priceKey(plan, config);
+      
+      // Validate
+      const valid = raw !== '' && !isNaN(val) && val >= 0 && val <= 9999;
+      inp.classList.toggle('invalid', !valid);
+      
+      if (!valid) {
+        // Don't update totals while invalid; remove from dirty so save doesn't push bad data
+        delete pricingDirty[key];
+        updateRowStatus(plan);
+        updatePricingToolbar();
+        return;
+      }
+      
+      // Track dirty if changed from original
+      const isDirty = Math.abs(val - original) > 0.0001;
+      if (isDirty) {
+        pricingDirty[key] = val;
+        inp.classList.add('dirty');
+      } else {
+        delete pricingDirty[key];
+        inp.classList.remove('dirty');
+      }
+      
+      // Update totals for this row+config
+      updateRowTotals(plan, config, val, isDirty);
+      updateRowStatus(plan);
+      updatePricingToolbar();
+    }
+    
+    function onPriceInputBlur(e) {
+      // Snap empty/invalid values back to original
+      const inp = e.target;
+      if (inp.classList.contains('invalid') || inp.value.trim() === '') {
+        inp.value = inp.dataset.original;
+        inp.classList.remove('invalid');
+        const key = priceKey(inp.dataset.plan, inp.dataset.config);
+        delete pricingDirty[key];
+        inp.classList.remove('dirty');
+        updateRowTotals(inp.dataset.plan, inp.dataset.config, parseFloat(inp.dataset.original), false);
+        updateRowStatus(inp.dataset.plan);
+        updatePricingToolbar();
+      }
+    }
+    
+    function updateRowTotals(plan, config, pricePerDay, dirty) {
+      document.querySelectorAll(`.price-total[data-plan="${plan}"][data-config="${config}"]`).forEach(el => {
+        const mult = parseInt(el.dataset.mult);
+        const total = +(pricePerDay * mult).toFixed(2);
+        el.textContent = `${total} SAR`;
+        el.classList.toggle('dirty', !!dirty);
+      });
+    }
+    
+    function updateRowStatus(plan) {
+      const dirtyForRow = Object.keys(pricingDirty).some(k => k.startsWith(`${plan}_`));
+      const statusEl = document.querySelector(`[data-row-status][data-plan="${plan}"]`);
+      if (!statusEl) return;
+      const labelEl = statusEl.querySelector('.label');
+      statusEl.classList.remove('clean', 'dirty', 'saving', 'saved', 'error');
+      if (dirtyForRow) {
+        statusEl.classList.add('dirty');
+        if (labelEl) labelEl.textContent = 'Unsaved';
+      } else {
+        statusEl.classList.add('clean');
+        if (labelEl) labelEl.textContent = 'No changes';
+      }
+    }
+    
+    function setRowStatus(plan, kind, label) {
+      const statusEl = document.querySelector(`[data-row-status][data-plan="${plan}"]`);
+      if (!statusEl) return;
+      const labelEl = statusEl.querySelector('.label');
+      statusEl.classList.remove('clean', 'dirty', 'saving', 'saved', 'error');
+      statusEl.classList.add(kind);
+      if (labelEl) labelEl.textContent = label;
+    }
+    
+    function updatePricingToolbar() {
+      const dirtyCount = Object.keys(pricingDirty).length;
+      const saveBtn = document.getElementById('pricesSaveAllBtn');
+      const resetBtn = document.getElementById('pricesResetBtn');
+      if (saveBtn) {
+        saveBtn.disabled = dirtyCount === 0;
+        saveBtn.textContent = dirtyCount === 0
+          ? 'Save all changes'
+          : `Save ${dirtyCount} change${dirtyCount === 1 ? '' : 's'}`;
+      }
+      if (resetBtn) resetBtn.disabled = dirtyCount === 0;
+    }
+    
+    async function savePricingChanges() {
+      const dirtyKeys = Object.keys(pricingDirty);
+      if (dirtyKeys.length === 0) return;
+      
+      const saveBtn = document.getElementById('pricesSaveAllBtn');
+      const resetBtn = document.getElementById('pricesResetBtn');
+      if (saveBtn) saveBtn.disabled = true;
+      if (resetBtn) resetBtn.disabled = true;
+      
+      // Collect rows to mark "saving"
+      const dirtyPlans = new Set(dirtyKeys.map(k => k.split('_')[0]));
+      dirtyPlans.forEach(plan => setRowStatus(plan, 'saving', 'Saving…'));
+      
+      // DEMO MODE — local only
+      if (!isLive) {
+        for (const key of dirtyKeys) {
+          const [plan, ...configParts] = key.split('_');
+          const config = configParts.join('_');
+          const newVal = pricingDirty[key];
+          const row = pricing.find(p => p.plan_type === plan && p.meal_config === config);
+          if (row) row.price_per_day = newVal;
+        }
+        // Reflect saved values as the new "original" so they're no longer dirty
+        document.querySelectorAll('.price-edit-input').forEach(inp => {
+          const key = priceKey(inp.dataset.plan, inp.dataset.config);
+          if (pricingDirty[key] !== undefined) {
+            inp.dataset.original = String(pricingDirty[key]);
+            inp.classList.remove('dirty');
+          }
+        });
+        document.querySelectorAll('.price-total').forEach(el => el.classList.remove('dirty'));
+        pricingDirty = {};
+        dirtyPlans.forEach(plan => setRowStatus(plan, 'saved', 'Saved (demo)'));
+        setTimeout(() => dirtyPlans.forEach(plan => updateRowStatus(plan)), 1600);
+        toast('Saved (demo) — connect to Supabase to persist ✓');
+        updatePricingToolbar();
+        return;
+      }
+      
+      // LIVE MODE — push to Supabase
+      const errors = [];
+      const successPlans = new Set();
+      for (const key of dirtyKeys) {
+        const [plan, ...configParts] = key.split('_');
+        const config = configParts.join('_');
+        const newVal = pricingDirty[key];
+        try {
+          const { error } = await sb.from('meal_pricing')
+            .update({ price_per_day: newVal })
+            .eq('plan_type', plan)
+            .eq('meal_config', config);
+          if (error) throw error;
+          successPlans.add(plan);
+          // Update local cache so re-renders are consistent
+          const row = pricing.find(p => p.plan_type === plan && p.meal_config === config);
+          if (row) row.price_per_day = newVal;
+          // Bump the input's original to the new saved value
+          const inp = document.querySelector(`.price-edit-input[data-plan="${plan}"][data-config="${config}"]`);
+          if (inp) {
+            inp.dataset.original = String(newVal);
+            inp.classList.remove('dirty');
+          }
+          // Clear dirty flags on totals
+          document.querySelectorAll(`.price-total[data-plan="${plan}"][data-config="${config}"]`).forEach(el => el.classList.remove('dirty'));
+          delete pricingDirty[key];
+        } catch (e) {
+          errors.push({ plan, config, msg: e.message || String(e) });
+          setRowStatus(plan, 'error', 'Failed');
+        }
+      }
+      
+      if (errors.length === 0) {
+        successPlans.forEach(plan => setRowStatus(plan, 'saved', 'Saved ✓'));
+        setTimeout(() => successPlans.forEach(plan => updateRowStatus(plan)), 1800);
+        toast(`Saved ${dirtyKeys.length} price change${dirtyKeys.length === 1 ? '' : 's'} ✓`);
+        // Refresh calculator dropdown / outputs
+        if (typeof computePrice === 'function') computePrice();
+      } else {
+        toast(`${errors.length} save${errors.length === 1 ? '' : 's'} failed — check console`, true);
+        console.error('[Greenola Admin] Pricing save errors:', errors);
+      }
+      
+      updatePricingToolbar();
+    }
+    
+    function resetPricingChanges() {
+      pricingDirty = {};
+      document.querySelectorAll('.price-edit-input').forEach(inp => {
+        inp.value = inp.dataset.original;
+        inp.classList.remove('dirty', 'invalid');
+        const plan = inp.dataset.plan;
+        const config = inp.dataset.config;
+        updateRowTotals(plan, config, parseFloat(inp.dataset.original), false);
+      });
+      document.querySelectorAll('[data-row-status]').forEach(el => {
+        const plan = el.dataset.plan;
+        updateRowStatus(plan);
+      });
+      updatePricingToolbar();
+    }
+    
+    // Wire toolbar buttons (script runs after DOM is parsed since it's at end of body)
+    (function wirePricingToolbar() {
+      const saveBtn = document.getElementById('pricesSaveAllBtn');
+      const resetBtn = document.getElementById('pricesResetBtn');
+      if (saveBtn) saveBtn.addEventListener('click', savePricingChanges);
+      if (resetBtn) resetBtn.addEventListener('click', () => {
+        if (Object.keys(pricingDirty).length === 0) return;
+        if (!confirm('Discard all unsaved changes?')) return;
+        resetPricingChanges();
+      });
+    })();
+    
+    function populateDealDropdown() {
+      const sel = document.getElementById('calcDeal');
+      sel.innerHTML = '<option value="">No deal (default)</option>' + 
+        deals.filter(d => d.status === 'active').map(d => `<option value="${d.id}">${escapeHtml(d.company_name)}</option>`).join('');
+    }
+    
+    function statusPill(status) {
+      const colors = {
+        active: 'pill-green',
+        draft: 'pill-grey',
+        paused: 'pill-mustard',
+        expired: 'pill-red',
+      };
+      return `<span class="pill ${colors[status] || 'pill-grey'}">${status || 'unknown'}</span>`;
+    }
+    
+    // ════════════════════════════════════════════════════════════
+    //  CALCULATOR
+    // ════════════════════════════════════════════════════════════
+    function computePrice() {
+      const plan = document.getElementById('calcPlan').value;
+      const config = document.getElementById('calcConfig').value;
+      const days = parseInt(document.getElementById('calcDuration').value);
+      const dealId = document.getElementById('calcDeal').value;
+      
+      const p = pricing.find(x => x.plan_type === plan && x.meal_config === config);
+      if (!p) return;
+      
+      const ppd = parseFloat(p.price_per_day);
+      const base = ppd * days;
+      
+      let fixedSubsidy = 0;
+      if (dealId) {
+        const deal = deals.find(d => d.id === dealId);
+        if (deal) {
+          fixedSubsidy = Math.max(0, parseFloat(deal.fixed_subsidy_sar) || 0);
+        }
+      }
+      
+      // No discount logic anymore — only fixed subsidy
+      const companyPays = Math.min(fixedSubsidy, base);
+      const userPays = base - companyPays;
+      // Plan-screen theater (40% off baseTotal — what the employee sees on plan-selection)
+      const theaterPlanPrice = Math.round(base * 0.60);
+      
+      document.getElementById('calcPricePerDay').textContent = ppd + ' SAR';
+      document.getElementById('calcDays').textContent = days;
+      document.getElementById('calcBase').textContent = Math.round(base) + ' SAR';
+      // Show "theater plan price" in the discount row (visual only — what employee sees on plan screen)
+      const calcDiscEl = document.getElementById('calcDiscount');
+      const calcDiscRow = document.getElementById('calcDiscountRow');
+      if (calcDiscEl) calcDiscEl.textContent = dealId ? `${theaterPlanPrice} SAR (40% theater on plan screen)` : '—';
+      if (calcDiscRow) calcDiscRow.style.display = dealId ? 'flex' : 'none';
+      document.getElementById('calcAfterDiscount').textContent = Math.round(base) + ' SAR';
+      document.getElementById('calcSubsidy').textContent = companyPays > 0 ? `−${Math.round(companyPays)} SAR (fixed)` : '—';
+      document.getElementById('calcSubsidyRow').style.display = companyPays > 0 ? 'flex' : 'none';
+      document.getElementById('calcUserPays').textContent = Math.round(userPays) + ' SAR';
+      const showBreakdownEl = document.getElementById('calcShowBreakdown');
+      if (showBreakdownEl) showBreakdownEl.textContent = companyPays > 0 ? 'be SHOWN to employee on checkout' : 'no subsidy line shown';
+    }
+    
+    ['calcPlan', 'calcConfig', 'calcDuration', 'calcDeal'].forEach(id => 
+      document.getElementById(id).addEventListener('change', computePrice));
+    
+    // ════════════════════════════════════════════════════════════
+    //  DEAL EDITING
+    // ════════════════════════════════════════════════════════════
+    function openDealModal(deal) {
+      document.getElementById('dealModal').classList.add('show');
+      document.getElementById('dealModalTitle').textContent = deal ? 'Edit Deal' : 'New Deal';
+      document.getElementById('dealId').value = deal?.id || '';
+      
+      // Basics
+      document.getElementById('dealName').value = deal?.company_name || '';
+      document.getElementById('dealStatus').value = deal?.status || 'active';
+      document.getElementById('dealContact').value = deal?.contact_person || '';
+      
+      // Code
+      document.getElementById('dealCode').value = deal?.unique_code || '';
+      document.getElementById('dealUsageCap').value = deal?.usage_cap ?? '';
+      document.getElementById('dealUsageCount').value = deal?.usage_count ?? 0;
+      // ISO timestamp → YYYY-MM-DD for the date input
+      const exp = deal?.code_expires_at;
+      document.getElementById('dealCodeExpires').value = exp ? exp.slice(0, 10) : '';
+      
+      // Pricing — new fixed-subsidy model
+      document.getElementById('dealFixedSubsidy').value = deal?.fixed_subsidy_sar ?? 0;
+      // Legacy hidden inputs (kept for back-compat with the save payload)
+      document.getElementById('dealDiscount').value = 0;
+      document.getElementById('dealSubsidy').value = 0;
+      document.getElementById('dealShowBreakdown').value = 'false';
+      
+      // Locked address
+      const addr = deal?.locked_address || {};
+      document.getElementById('dealAddrLabel').value    = addr.label || '';
+      document.getElementById('dealAddrBuilding').value = addr.building || '';
+      document.getElementById('dealAddrDistrict').value = addr.district || '';
+      document.getElementById('dealAddrLandmark').value = addr.landmark || '';
+      document.getElementById('dealAddrDriver').value   = addr.driver_instructions || '';
+      document.getElementById('dealAddrLat').value      = addr.lat ?? '';
+      document.getElementById('dealAddrLng').value      = addr.lng ?? '';
+      
+      // Verified domains
+      const domains = Array.isArray(deal?.verified_domains) ? deal.verified_domains : [];
+      document.getElementById('dealVerifiedDomains').value = domains.join(', ');
+      
+      // Notes
+      document.getElementById('dealNotes').value = deal?.internal_notes || '';
+      
+      document.getElementById('dealDeleteBtn').classList.toggle('hidden', !deal);
+      
+      // Show / hide redemptions section + load on edit
+      const redemptionsSection = document.getElementById('dealRedemptionsSection');
+      if (deal && isLive) {
+        redemptionsSection.style.display = '';
+        loadRedemptions(deal.id);
+      } else {
+        redemptionsSection.style.display = 'none';
+      }
+    }
+    
+    async function loadRedemptions(dealId) {
+      const box = document.getElementById('dealRedemptionsLog');
+      box.innerHTML = '<div style="color:var(--ink-mute);text-align:center;padding:20px 0;">Loading…</div>';
+      try {
+        const { data, error } = await sb
+          .from('b2b_code_redemptions')
+          .select('*')
+          .eq('company_deal_id', dealId)
+          .order('redeemed_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        if (!data || !data.length) {
+          box.innerHTML = '<div style="color:var(--ink-mute);text-align:center;padding:20px 0;">No redemptions yet.</div>';
+          return;
+        }
+        box.innerHTML = data.map(r => {
+          const status = r.status === 'success'
+            ? '<span class="pill pill-green" style="font-size:12px;">success</span>'
+            : `<span class="pill pill-red" style="font-size:12px;">${escapeHtml(r.status.replace('rejected_', ''))}</span>`;
+          const when = formatDate(r.redeemed_at);
+          const who = [r.full_name, r.phone].filter(Boolean).map(escapeHtml).join(' · ') || '<span style="color:var(--ink-mute)">anonymous</span>';
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:500;font-size:14px;">${who}</div>
+                <div style="color:var(--ink-mute);font-size:12.5px;">code: <code>${escapeHtml(r.code_used)}</code> · ${when}</div>
+              </div>
+              ${status}
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        box.innerHTML = `<div style="color:#c83a3a;font-size:13px;text-align:center;padding:14px 0;">Failed to load: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+    
+    function closeDealModal() {
+      document.getElementById('dealModal').classList.remove('show');
+    }
+    
+    window.editDeal = (id) => {
+      const deal = deals.find(d => d.id === id);
+      if (deal) openDealModal(deal);
+    };
+    
+    document.getElementById('newDealBtn').addEventListener('click', () => openDealModal(null));
+    document.getElementById('dealModalClose').addEventListener('click', closeDealModal);
+    document.getElementById('dealCancelBtn').addEventListener('click', closeDealModal);
+    document.getElementById('dealModal').addEventListener('click', e => {
+      if (e.target.id === 'dealModal') closeDealModal();
+    });
+    
+    // Reset usage_count button
+    document.getElementById('dealResetCount').addEventListener('click', () => {
+      if (!confirm('Reset usage count to 0? Past redemptions in the log are kept.')) return;
+      document.getElementById('dealUsageCount').value = 0;
+      toast('Will reset on save');
+    });
+    
+    document.getElementById('dealSaveBtn').addEventListener('click', async () => {
+      // Build locked_address — null if all sub-fields are empty (cleaner than empty object)
+      const addrFields = {
+        label:               document.getElementById('dealAddrLabel').value.trim(),
+        building:            document.getElementById('dealAddrBuilding').value.trim(),
+        district:            document.getElementById('dealAddrDistrict').value.trim(),
+        city:                'الرياض',
+        landmark:            document.getElementById('dealAddrLandmark').value.trim(),
+        driver_instructions: document.getElementById('dealAddrDriver').value.trim(),
+        lat:                 parseFloat(document.getElementById('dealAddrLat').value),
+        lng:                 parseFloat(document.getElementById('dealAddrLng').value),
+      };
+      // Strip empty / NaN values
+      Object.keys(addrFields).forEach(k => {
+        const v = addrFields[k];
+        if (v === '' || v === null || (typeof v === 'number' && isNaN(v))) delete addrFields[k];
+      });
+      const lockedAddress = Object.keys(addrFields).filter(k => k !== 'city').length > 0 ? addrFields : null;
+      
+      // Verified domains: comma-separated → array, lowercased, trimmed, deduped
+      const domainsRaw = document.getElementById('dealVerifiedDomains').value.trim();
+      const verifiedDomains = domainsRaw
+        ? [...new Set(domainsRaw.split(/[,\s]+/).map(d => d.trim().toLowerCase()).filter(Boolean))]
+        : [];
+      
+      // Code expiry: YYYY-MM-DD → ISO timestamptz at end of day Saudi time
+      const expRaw = document.getElementById('dealCodeExpires').value;
+      const codeExpiresAt = expRaw ? new Date(expRaw + 'T23:59:59+03:00').toISOString() : null;
+      
+      // Usage cap: empty → null (unlimited)
+      const capRaw = document.getElementById('dealUsageCap').value.trim();
+      const usageCap = capRaw === '' ? null : Math.max(0, parseInt(capRaw, 10) || 0);
+      
+      // Code: trim, lowercase, no spaces. Empty → null.
+      const codeRaw = document.getElementById('dealCode').value.trim().replace(/\s+/g, '');
+      const uniqueCode = codeRaw ? codeRaw.toLowerCase() : null;
+      
+      const payload = {
+        company_name: document.getElementById('dealName').value.trim(),
+        unique_code: uniqueCode,
+        usage_cap: usageCap,
+        usage_count: parseInt(document.getElementById('dealUsageCount').value, 10) || 0,
+        code_expires_at: codeExpiresAt,
+        // New: fixed SAR subsidy model
+        fixed_subsidy_sar: parseFloat(document.getElementById('dealFixedSubsidy').value) || 0,
+        // Legacy fields zeroed out — keep them in payload to avoid breaking older RLS/triggers
+        discount_pct: 0,
+        subsidy_pct: 0,
+        show_breakdown: false,
+        status: document.getElementById('dealStatus').value,
+        contact_person: document.getElementById('dealContact').value.trim() || null,
+        locked_address: lockedAddress,
+        verified_domains: verifiedDomains,
+        internal_notes: document.getElementById('dealNotes').value.trim() || null,
+      };
+      
+      if (!payload.company_name) { toast('Company name required', true); return; }
+      if (uniqueCode && !/^[a-z0-9_-]+$/.test(uniqueCode)) {
+        toast('Code can only contain letters, numbers, _ and -', true);
+        return;
+      }
+      
+      const id = document.getElementById('dealId').value;
+      
+      if (!isLive) {
+        // Demo mode — just update local
+        if (id) {
+          const i = deals.findIndex(d => d.id === id);
+          deals[i] = { ...deals[i], ...payload };
+        } else {
+          deals.unshift({ id: 'demo-' + Date.now(), ...payload });
+        }
+        renderDeals(); populateDealDropdown(); closeDealModal();
+        toast('Saved (demo) ✓');
+        return;
+      }
+      
+      try {
+        let result;
+        if (id) {
+          result = await sb.from('company_deals').update(payload).eq('id', id).select().single();
+        } else {
+          // New deal — don't allow usage_count to be set on insert (always start at 0)
+          const { usage_count, ...insertPayload } = payload;
+          result = await sb.from('company_deals').insert(insertPayload).select().single();
+        }
+        if (result.error) throw result.error;
+        await loadAllData();
+        closeDealModal();
+        toast('Saved ✓');
+      } catch (e) {
+        // Friendlier error for the unique-code clash
+        if (e.message?.toLowerCase().includes('unique') || e.code === '23505') {
+          toast('Code already in use by another deal', true);
+        } else {
+          toast('Save failed: ' + e.message, true);
+        }
+      }
+    });
+    
+    document.getElementById('dealDeleteBtn').addEventListener('click', async () => {
+      const id = document.getElementById('dealId').value;
+      if (!id || !confirm('Delete this deal? Leads will keep their assignment but no new ones will match.')) return;
+      
+      if (!isLive) {
+        deals = deals.filter(d => d.id !== id);
+        renderDeals(); populateDealDropdown(); closeDealModal();
+        toast('Deleted (demo) ✓');
+        return;
+      }
+      
+      try {
+        const { error } = await sb.from('company_deals').delete().eq('id', id);
+        if (error) throw error;
+        await loadAllData();
+        closeDealModal();
+        toast('Deleted ✓');
+      } catch (e) {
+        toast('Delete failed: ' + e.message, true);
+      }
+    });
+    
+    // ════════════════════════════════════════════════════════════
+    //  CONNECT MODAL
+    // ════════════════════════════════════════════════════════════
+    document.getElementById('connectBtn').addEventListener('click', () => {
+      // Pre-fill with greenola-crm credentials by default for first-time users
+      const savedUrl = localStorage.getItem('greenola_supabase_url');
+      const savedKey = localStorage.getItem('greenola_supabase_key');
+      document.getElementById('connectUrl').value = savedUrl || 'https://rcijhstzwwuhqiwxtzoa.supabase.co';
+      document.getElementById('connectKey').value = savedKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaWpoc3R6d3d1aHFpd3h0em9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjMyMjIsImV4cCI6MjA5MTkzOTIyMn0.aaguE99pR4u5J-uOW08M4cvuCmCA1IYSiN_LO9rwVZY';
+      document.getElementById('connectModal').classList.add('show');
+    });
+    document.getElementById('connectModalClose').addEventListener('click', () => {
+      document.getElementById('connectModal').classList.remove('show');
+    });
+    document.getElementById('connectCancelBtn').addEventListener('click', () => {
+      document.getElementById('connectModal').classList.remove('show');
+    });
+    document.getElementById('connectSaveBtn').addEventListener('click', () => {
+      const url = document.getElementById('connectUrl').value.trim();
+      const key = document.getElementById('connectKey').value.trim();
+      if (!url || !key) { toast('Both fields required', true); return; }
+      localStorage.setItem('greenola_supabase_url', url);
+      localStorage.setItem('greenola_supabase_key', key);
+      document.getElementById('connectModal').classList.remove('show');
+      initSupabase(url, key);
+    });
+    
+    // ════════════════════════════════════════════════════════════
+    //  TABS
+    // ════════════════════════════════════════════════════════════
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+        document.getElementById('pane-' + t.dataset.tab).classList.remove('hidden');
+      });
+    });
+    
+    // ════════════════════════════════════════════════════════════
+    //  EXPORT CSV
+    // ════════════════════════════════════════════════════════════
+    document.getElementById('exportLeadsBtn').addEventListener('click', () => {
+      const headers = ['Name', 'Phone', 'Company', 'Matched Deal', 'Plan', 'Config', 'Days', 'Created'];
+      const rows = leads.map(l => [
+        l.full_name, l.phone, l.company_name, l.matched_company || '',
+        l.plan_type || '', l.meal_config || '', l.duration_days || '',
+        new Date(l.created_at).toISOString()
+      ]);
+      const csv = [headers, ...rows].map(r => r.map(c => `"${(c+'').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `greenola-leads-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('CSV downloaded ✓');
+    });
+    
+    // ════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ════════════════════════════════════════════════════════════
+    function escapeHtml(s) {
+      if (!s) return '';
+      return (s+'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function formatDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function toast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.toggle('error', !!isError);
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+    
+    // Refresh buttons
+    document.getElementById('refreshDealsBtn').addEventListener('click', loadAllData);
+    document.getElementById('refreshLeadsBtn').addEventListener('click', loadAllData);
+    
+    // ════════════════════════════════════════════════════════════
+    //  INIT — wait for DOM + Supabase library
+    // ════════════════════════════════════════════════════════════
+    function bootstrap() {
+      try {
+        loadStoredCreds();
+      } catch (err) {
+        console.error('[Greenola Admin] Init failed:', err);
+        // Force fall through to demo mode so user isn't stuck
+        try { loadDemo(); } catch (e2) { console.error('[Greenola Admin] Even demo failed:', e2); }
+      }
+    }
+    
+    // Make sure DOM is ready before binding events
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootstrap);
+    } else {
+      bootstrap();
+    }
+    
+
+    
+    // ════════════════════════════════════════════════════════════
+    //  PHOTOS TAB
+    // ════════════════════════════════════════════════════════════
+    let photosList = [];
+    let mealsList = [];
+    
+    async function loadPhotos() {
+      const gallery = document.getElementById('photosGallery');
+      
+      if (!isLive) {
+        gallery.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--ink-mute); font-size: 15px;">
+            Connect to Supabase to manage photos.
+          </div>`;
+        return;
+      }
+      
+      try {
+        // List files in the bucket via REST
+        const { data, error } = await sb.storage.from('greenola-b2b').list('', {
+          limit: 100,
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+        
+        if (error) throw error;
+        
+        // Also list inside subfolders
+        const allFiles = [];
+        for (const item of (data || [])) {
+          if (item.id === null && item.name) {
+            // It's a folder, list contents
+            const { data: subFiles } = await sb.storage.from('greenola-b2b').list(item.name, { limit: 100 });
+            (subFiles || []).forEach(f => {
+              if (f.name && !f.name.startsWith('.')) {
+                allFiles.push({ ...f, path: `${item.name}/${f.name}` });
+              }
+            });
+          } else if (item.name && !item.name.startsWith('.')) {
+            allFiles.push({ ...item, path: item.name });
+          }
+        }
+        
+        photosList = allFiles;
+        document.getElementById('photosCount').textContent = allFiles.length;
+        renderPhotos();
+      } catch (e) {
+        console.error('[Photos] Load failed:', e);
+        gallery.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--danger); font-size: 15px;">
+            Failed to load photos: ${e.message}
+          </div>`;
+      }
+    }
+    
+    function renderPhotos() {
+      const gallery = document.getElementById('photosGallery');
+      
+      if (!photosList.length) {
+        gallery.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--ink-mute); font-size: 15px;">
+            No photos uploaded yet. Drop a file above to get started.
+          </div>`;
+        return;
+      }
+      
+      gallery.innerHTML = photosList.map(p => {
+        const url = `${localStorage.getItem('greenola_supabase_url')}/storage/v1/object/public/greenola-b2b/${p.path}`;
+        const sizeKB = p.metadata?.size ? Math.round(p.metadata.size / 1024) : '?';
+        const folder = p.path.includes('/') ? p.path.split('/')[0] : 'root';
+        return `
+          <div class="photo-card" style="
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            transition: all 0.2s var(--ease);
+          " onmouseover="this.style.boxShadow='0 6px 16px -4px rgba(14,31,27,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div style="
+              aspect-ratio: 1;
+              background: #FAFAF6 url('${url}') center/contain no-repeat;
+              border-bottom: 1px solid var(--line);
+            "></div>
+            <div style="padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;" title="${escapeHtml(p.path)}">${escapeHtml(p.name)}</span>
+                <span class="pill pill-grey" style="font-size: 11px;">${escapeHtml(folder)}</span>
+              </div>
+              <div style="font-size: 12px; color: var(--ink-mute);">${sizeKB} KB</div>
+              <div style="display: flex; gap: 4px; margin-top: 4px;">
+                <button class="btn btn-secondary btn-sm" style="flex: 1; font-size: 13px; padding: 5px 8px;" onclick="copyPhotoUrl('${escapeAttr(url)}')">Copy URL</button>
+                <button class="btn btn-danger btn-sm" style="font-size: 13px; padding: 5px 8px;" onclick="deletePhoto('${escapeAttr(p.path)}')" title="Delete">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    window.copyPhotoUrl = (url) => {
+      navigator.clipboard.writeText(url).then(() => toast('URL copied ✓'));
+    };
+    
+    window.deletePhoto = async (path) => {
+      if (!confirm(`Delete "${path}"? This cannot be undone.`)) return;
+      try {
+        const { error } = await sb.storage.from('greenola-b2b').remove([path]);
+        if (error) throw error;
+        toast('Photo deleted ✓');
+        loadPhotos();
+      } catch (e) {
+        toast('Delete failed: ' + e.message, true);
+      }
+    };
+    
+    // Drag-drop + file input upload
+    function setupDropzone() {
+      const dz = document.getElementById('dropzone');
+      const input = document.getElementById('fileInput');
+      
+      dz.addEventListener('click', () => input.click());
+      input.addEventListener('change', e => handleFiles(e.target.files));
+      
+      ['dragenter', 'dragover'].forEach(ev => {
+        dz.addEventListener(ev, e => {
+          e.preventDefault();
+          dz.style.borderColor = 'var(--green-primary)';
+          dz.style.background = '#F0FBF4';
+        });
+      });
+      ['dragleave', 'drop'].forEach(ev => {
+        dz.addEventListener(ev, e => {
+          e.preventDefault();
+          dz.style.borderColor = 'var(--line)';
+          dz.style.background = '#FAFAF6';
+        });
+      });
+      dz.addEventListener('drop', e => {
+        e.preventDefault();
+        if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+      });
+    }
+    
+    async function handleFiles(files) {
+      if (!isLive) {
+        toast('Connect to Supabase first', true);
+        return;
+      }
+      
+      const category = document.getElementById('uploadCategory').value;
+      const folder = category === 'plan' ? 'plans' :
+                     category === 'meal' ? 'meals' :
+                     category === 'hero' ? 'hero' :
+                     category === 'icon' ? 'icons' : 'other';
+      
+      let uploaded = 0;
+      let failed = 0;
+      
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          failed++;
+          continue;
+        }
+        
+        const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-').toLowerCase();
+        const path = `${folder}/${Date.now()}-${cleanName}`;
+        
+        try {
+          const { data, error } = await sb.storage
+            .from('greenola-b2b')
+            .upload(path, file, { 
+              cacheControl: '3600',
+              upsert: false,
+              contentType: file.type 
+            });
+          
+          if (error) throw error;
+          uploaded++;
+        } catch (e) {
+          console.error('[Upload]', file.name, e);
+          failed++;
+        }
+      }
+      
+      if (uploaded > 0) toast(`Uploaded ${uploaded} ✓${failed ? ` (${failed} failed)` : ''}`);
+      else if (failed > 0) toast(`Upload failed`, true);
+      
+      // Reset input
+      document.getElementById('fileInput').value = '';
+      
+      // Refresh gallery
+      loadPhotos();
+    }
+    
+    document.getElementById('refreshPhotosBtn').addEventListener('click', loadPhotos);
+    
+    // ════════════════════════════════════════════════════════════
+    //  MEALS TAB
+    // ════════════════════════════════════════════════════════════
+    async function loadMeals() {
+      if (!isLive) {
+        document.getElementById('mealsTable').innerHTML = '<tr><td colspan="9" class="empty-state">Connect to Supabase first</td></tr>';
+        return;
+      }
+      try {
+        const { data, error } = await sb.from('meals').select('*').order('display_order');
+        if (error) throw error;
+        mealsList = data || [];
+        document.getElementById('mealsCount').textContent = mealsList.length;
+        renderMeals();
+      } catch (e) {
+        document.getElementById('mealsTable').innerHTML = `<tr><td colspan="9" class="empty-state" style="color:var(--danger)">${e.message}</td></tr>`;
+      }
+    }
+    
+    function renderMeals() {
+      const tbody = document.getElementById('mealsTable');
+      if (!mealsList.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No meals yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = mealsList.map(m => `
+        <tr>
+          <td>${m.image_url ? `<div style="width:40px;height:40px;border-radius:8px;background:#FAFAF6 url('${escapeAttr(m.image_url)}') center/cover;border:1px solid var(--line);"></div>` : '<div style="width:40px;height:40px;border-radius:8px;background:var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-mute);font-size:16px;">📷</div>'}</td>
+          <td><strong>${escapeHtml(m.name_ar || m.name_en)}</strong>${m.name_en && m.name_ar ? `<br><small style="color:var(--ink-mute)">${escapeHtml(m.name_en)}</small>` : ''}</td>
+          <td>${statusPill(m.meal_type)}</td>
+          <td>${(m.plan_types || []).map(p => `<span class="pill pill-grey" style="margin-right:3px;">${p}</span>`).join('')}</td>
+          <td><span style="font-family:Cairo;font-weight:700;">${m.calories || '—'}</span></td>
+          <td><span style="font-family:Cairo;color:var(--green-medium);">${m.protein_g || '—'}</span></td>
+          <td><span style="font-family:Cairo;color:var(--green-medium);">${m.carbs_g || '—'}</span></td>
+          <td><span style="font-family:Cairo;color:var(--green-medium);">${m.fat_g || '—'}</span></td>
+          <td>${m.active ? '<span class="pill pill-green">Yes</span>' : '<span class="pill pill-grey">No</span>'}</td>
+        </tr>
+      `).join('');
+    }
+    
+    document.getElementById('refreshMealsBtn').addEventListener('click', loadMeals);
+    
+    function escapeAttr(s) {
+      return (s+'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    
+    // Initialize on connect
+    const originalLoadAllData = loadAllData;
+    loadAllData = async function() {
+      await originalLoadAllData();
+      loadPhotos();
+      loadMeals();
+    };
+    
+    setupDropzone();
+    
+    // Safety net: if Supabase library never loads, show demo within 1s
+    setTimeout(function(){
+      if (!window.supabase || !window.supabase.createClient) {
+        console.warn('[Greenola Admin] Supabase lib unavailable — staying in demo mode');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
