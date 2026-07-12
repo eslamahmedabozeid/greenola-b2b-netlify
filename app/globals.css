@@ -374,7 +374,7 @@
       .content { padding: 8px 12px; gap: 6px; }
       .section { gap: 6px; }
       .section-title { margin-bottom: 2px; }
-      .plan-card { height: 74px; }
+      .plan-card { min-height: 80px; height: auto; }
       .meal-card { padding: 8px 10px; }
       .duration-card { padding: 8px 8px 10px; }
       .bottom-bar { padding: 8px 14px 12px; }
@@ -396,7 +396,7 @@
       .hero { height: clamp(200px, 30dvh, 260px); }
       .top-strip { padding: 10px 16px 10px; }
       .content { padding: 8px 12px; gap: 6px; }
-      .plan-card { height: 72px; }
+      .plan-card { min-height: 78px; height: auto; }
       .meal-card { padding: 8px 10px; }
       .duration-card { padding: 8px; }
       .section-title { margin-bottom: 4px; }
@@ -480,6 +480,9 @@
       cursor: pointer;
       flex-shrink: 0;
     }
+    html[dir="ltr"] .back-btn svg {
+      transform: scaleX(-1);
+    }
     .header-title {
       flex: 1;
       color: #fff;
@@ -540,15 +543,15 @@
     .card {
       background: var(--bg-card);
       border-radius: 14px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     
     .card-title {
       font-size: 13.5px; font-weight: 800; color: #fff;
       background: #24B25D;
-      margin: -10px -12px 10px -12px;
-      padding: 9px 14px;
+      margin: -12px -14px 12px -14px;
+      padding: 10px 16px;
       border-radius: 12px 12px 0 0;
       display: flex; align-items: center; gap: 8px;
     }
@@ -562,11 +565,13 @@
     
     /* PLAN CARDS — JOYFUL: light cards with photos + colored accents (no dark gradient) */
     .plan-stack {
-      display: flex; flex-direction: column; gap: 5px;
+      display: flex; flex-direction: column; gap: 8px;
     }
     .plan-card {
       width: 100%;
-      height: 78px;
+      height: auto;
+      min-height: 84px;
+      padding: 12px 14px;
       background: var(--bg-card);
       border: 1.5px solid var(--line);
       border-radius: 14px;
@@ -576,6 +581,25 @@
       direction: rtl;
       position: relative;
       overflow: hidden;
+    }
+    html[dir="ltr"] .plan-card {
+      direction: ltr;
+    }
+    html[dir="ltr"] .plate-info {
+      padding-right: 8px;
+      padding-left: 2px;
+      text-align: left;
+    }
+    html[dir="ltr"] .plate-name {
+      text-align: left;
+    }
+    html[dir="ltr"] .plan-card .badge-popular {
+      left: auto;
+      right: 12px;
+    }
+    html[dir="ltr"] .plate-check {
+      margin-left: 0;
+      margin-right: 12px;
     }
     .plan-card:hover { border-color: var(--green-primary); }
     .plan-card.selected {
@@ -596,23 +620,24 @@
       flex: 1;
       display: flex; flex-direction: column;
       justify-content: center;
-      gap: 3px;
+      gap: 6px;
       padding-right: 4px;
+      min-width: 0;
     }
     .plate-name {
       font-size: 16px; font-weight: 800;
       color: var(--green-dark-text);
-      line-height: 1.1;
+      line-height: 1.2;
     }
     .plan-card.selected .plate-name { color: var(--green-primary); }
     .plate-macros {
-      display: flex; gap: 4px; flex-wrap: wrap;
+      display: flex; gap: 6px; flex-wrap: wrap;
     }
     .plate-macro {
       display: inline-flex; align-items: center; gap: 3px;
       font-size: 11.5px; font-weight: 700;
       color: #FFFEDC;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       white-space: nowrap;
     }
@@ -636,11 +661,11 @@
     
     .plan-card .badge-popular {
       position: absolute;
-      top: 8px; left: 12px;
+      top: 10px; left: 12px;
       background: #24B25D;
       color: #FFFEDC;
       font-size: 11px; font-weight: 800;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       letter-spacing: 0.02em;
     }
@@ -656,7 +681,7 @@
       opacity: 0; transform: scale(0.5);
       transition: all 0.25s var(--ease);
     }
-    .plan-card.selected .plate-check { opacity: 1; transform: scale(1); }
+    .plan-card.selected .plate-check { opacity: 1; transform: scale(1);margin-top: 20px; }
     
     /* MEAL CONFIG ROW — light cards with mustard/green accents */
     .meal-row {
@@ -674,6 +699,17 @@
       direction: rtl;
       display: flex; flex-direction: column;
       gap: 4px;
+    }
+    html[dir="ltr"] .meal-card {
+      direction: ltr;
+      text-align: left;
+    }
+    html[dir="ltr"] .meal-label {
+      text-align: left;
+    }
+    html[dir="ltr"] .meal-card .check-corner {
+      left: auto;
+      right: 8px;
     }
     .meal-card:hover { border-color: var(--green-primary); }
     .meal-card.selected {
@@ -697,6 +733,10 @@
       padding-top: 4px;
       border-top: 1px solid var(--line-soft);
       margin-top: 2px;
+    }
+    html[dir="ltr"] .meal-price-from {
+      direction: ltr;
+      text-align: left;
     }
     .meal-card.selected .meal-price-from {
       color: var(--green-medium);
@@ -973,6 +1013,14 @@
       direction: rtl;
       animation: fadeUp 0.4s var(--ease) both;
     }
+    html[dir="ltr"] .menu-preview-note {
+      direction: ltr;
+      text-align: left;
+    }
+    html[dir="ltr"] .menu-preview-note span {
+      text-align: left;
+      unicode-bidi: isolate;
+    }
     .menu-preview-note .info-icon {
       flex-shrink: 0;
       color: #B97A0E;
@@ -1180,13 +1228,13 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      direction: rtl;
       box-sizing: border-box;
     }
     .screen4-content > * { max-width: 100%; box-sizing: border-box; }
     .screen4-content .field { display: flex; flex-direction: column; gap: 6px; }
     .screen4-content .field-label {
       font-size: 15px; font-weight: 700; color: var(--ink-soft);
+      text-align: start;
     }
     .screen4-content .input {
       width: 100%;
@@ -1200,7 +1248,7 @@
       font-family: inherit; font-size: 16px; font-weight: 500;
       color: var(--ink); outline: none;
       transition: all 0.2s var(--ease);
-      direction: rtl;
+      text-align: start;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -1238,7 +1286,6 @@
       display: flex;
       gap: 10px;
       align-items: flex-start;
-      direction: rtl;
     }
     .address-info-icon {
       flex-shrink: 0;
@@ -1305,8 +1352,38 @@
       margin-top: 2px;
       display: block;
       min-height: 16px;
+      text-align: start;
     }
     .date-hint.hint-error { color: #c83a3a; }
+    /* Screen 4 — force LTR/RTL alignment by document language */
+    html[dir="ltr"] [data-screen="4"] .screen4-content,
+    html[dir="ltr"] [data-screen="4"] .address-info-card,
+    html[dir="ltr"] [data-screen="4"] .address-info-text,
+    html[dir="ltr"] [data-screen="4"] .address-info-title,
+    html[dir="ltr"] [data-screen="4"] .address-info-sub,
+    html[dir="ltr"] [data-screen="4"] .field-label,
+    html[dir="ltr"] [data-screen="4"] .input:not([type="date"]),
+    html[dir="ltr"] [data-screen="4"] .date-hint {
+      direction: ltr !important;
+      text-align: left !important;
+      unicode-bidi: isolate;
+    }
+    html[dir="ltr"] [data-screen="4"] .address-grid .field-label {
+      justify-content: flex-start;
+      flex-direction: row;
+    }
+    html[dir="rtl"] [data-screen="4"] .screen4-content,
+    html[dir="rtl"] [data-screen="4"] .address-info-card,
+    html[dir="rtl"] [data-screen="4"] .address-info-text,
+    html[dir="rtl"] [data-screen="4"] .address-info-title,
+    html[dir="rtl"] [data-screen="4"] .address-info-sub,
+    html[dir="rtl"] [data-screen="4"] .field-label,
+    html[dir="rtl"] [data-screen="4"] .input:not([type="date"]),
+    html[dir="rtl"] [data-screen="4"] .date-hint {
+      direction: rtl;
+      text-align: right;
+    }
+
     
     /* ════════ SCREEN 5 — CHECKOUT (Style D) ════════ */
     .checkout-scroll {
