@@ -262,15 +262,14 @@
     /* Phone field */
     .phone-field { display: flex; gap: 8px; direction: ltr; }
     .country-code {
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      padding: 0 12px; height: 46px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 14px; height: 46px;
       background: linear-gradient(135deg, var(--green-primary), #1FA052);
       border-radius: var(--radius-md);
       color: #fff; font-weight: 800; font-size: 15px;
       box-shadow: 0 4px 12px -2px rgba(36, 178, 93, 0.3);
-      flex-shrink: 0;
+      flex-shrink: 0; white-space: nowrap;
     }
-    .country-code .flag { font-size: 16px; }
     .phone-field .input { flex: 1; direction: ltr; text-align: left; }
     
     /* Company field */
@@ -341,6 +340,8 @@
     .cta:disabled::before { display: none; }
     .cta .arrow { transition: transform 0.25s var(--ease); }
     .cta:hover:not(:disabled) .arrow { transform: translateX(-4px); }
+    html[dir="ltr"] .cta .arrow { transform: scaleX(-1); }
+    html[dir="ltr"] .cta:hover:not(:disabled) .arrow { transform: scaleX(-1) translateX(-4px); }
     
     .trust-note {
       text-align: center; font-size: 12.5px; color: var(--ink-mute);
@@ -452,7 +453,8 @@
     .top-strip {
       flex-shrink: 0;
       background: linear-gradient(135deg, #2EBF6A 0%, #24B25D 50%, #1A9B4D 100%);
-      padding: 14px 18px 12px;
+      /* Clear the desktop phone-frame notch (::before is 28px tall) */
+      padding: 34px 18px 12px;
       position: relative;
       border-radius: 0;
     }
@@ -1101,6 +1103,11 @@
     .meal-info {
       padding: 8px 10px 10px;
       direction: rtl;
+      text-align: right;
+    }
+    html[dir="ltr"] .meal-info {
+      direction: ltr;
+      text-align: left;
     }
     .meal-name {
       font-size: 14.5px;

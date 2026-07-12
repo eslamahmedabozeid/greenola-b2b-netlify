@@ -22,8 +22,7 @@ export function GreenolaMarkup() {
                     <label className="field-label" htmlFor="phone" data-i18n="login_phone">رقم الجوال</label>
                     <div className="phone-field">
                       <div className="country-code">
-                        <span className="flag">🇸🇦</span>
-                        <span>+966</span>
+                        <span>SA +966</span>
                       </div>
                       <input className="input" type="tel" id="phone" name="phone" placeholder="5XXXXXXXX" required pattern="[0-9]{9}" autoComplete="tel-national" maxLength={9} />
                     </div>
@@ -178,7 +177,7 @@ export function GreenolaMarkup() {
                   </div>
                   <button className="cta" id="continueBtn" data-liquid type="button">
                     <span data-i18n="continue">تابع</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="arrow" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1={19} y1={12} x2={5} y2={12} /><polyline points="12 19 5 12 12 5" />
                     </svg>
                   </button>
@@ -251,7 +250,7 @@ export function GreenolaMarkup() {
                 <div className="menu-bottom-bar">
                   <button className="cta" id="menuNextBtn" type="button">
                     <span data-i18n="next">التالي</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="arrow" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1={19} y1={12} x2={5} y2={12} /><polyline points="12 19 5 12 12 5" />
                     </svg>
                   </button>
@@ -330,7 +329,7 @@ export function GreenolaMarkup() {
                 <div className="menu-bottom-bar" id="screen4BottomBar">
                   <button className="cta" id="screen4NextBtn" type="button">
                     <span data-i18n="continue">تابع</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="arrow" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1={19} y1={12} x2={5} y2={12} /><polyline points="12 19 5 12 12 5" />
                     </svg>
                   </button>
