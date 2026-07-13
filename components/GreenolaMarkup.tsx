@@ -136,14 +136,14 @@ export function GreenolaMarkup() {
                         <div className="meal-card-head">
                           <span className="meal-label" data-i18n="meal_lunch">غداء فقط</span>
                         </div>
-                        <div className="meal-price-from"><span data-i18n="price_from">ابتداءً من</span> <span className="amount">٢٥</span> <span data-i18n="currencyPerDay">ر.س / يوم</span></div>
+                        <div className="meal-price-from"><span data-i18n="price_from">ابتداءً من</span> <span className="amount">25</span> <span data-i18n="currencyPerDay">ر.س / يوم</span></div>
                       </div>
                       <div className="meal-card" data-meal="lunch_snack">
                         <div className="check-corner"><svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>
                         <div className="meal-card-head">
                           <span className="meal-label" data-i18n="meal_lunch_snack">غداء + سناك</span>
                         </div>
-                        <div className="meal-price-from"><span data-i18n="price_from">ابتداءً من</span> <span className="amount">٣٠</span> <span data-i18n="currencyPerDay">ر.س / يوم</span></div>
+                        <div className="meal-price-from"><span data-i18n="price_from">ابتداءً من</span> <span className="amount">30</span> <span data-i18n="currencyPerDay">ر.س / يوم</span></div>
                       </div>
                     </div>
                   </div>
