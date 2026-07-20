@@ -37,6 +37,15 @@ export function GreenolaMarkup() {
                     </div>
                   </div>
                   <div className="field">
+                    <label className="field-label" htmlFor="email" data-i18n="login_email">البريد الإلكتروني</label>
+                    <div className="company-field">
+                      <input className="input" type="email" id="email" name="email" data-i18n-placeholder="login_email_ph" placeholder="ahmed@company.com" required autoComplete="email" />
+                      <svg className="company-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4h16v16H4z" /><path d="M4 7l8 6 8-6" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="field">
                     <label className="field-label" htmlFor="companyCode">
                       <span data-i18n="login_companyCode">كود الشركة</span>{' '}
                       <span className="optional-tag" data-i18n="optional">اختياري</span>

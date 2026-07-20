@@ -1,0 +1,155 @@
+.shell {
+  position: relative;
+  width: 100%;
+}
+
+.widgetShell {
+  position: relative;
+  min-height: 280px;
+}
+
+.formCard {
+  position: relative;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid #e8efe9;
+  background: #fff;
+  box-shadow: 0 10px 30px -20px rgba(0, 78, 66, 0.25);
+}
+
+.gatewayHeader {
+  margin-bottom: 14px;
+}
+
+.brandPills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.brandPills span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #e8efe9;
+  background: #fafcf9;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4a5c56;
+  letter-spacing: 0.05em;
+}
+
+.gatewayHint {
+  margin: 0;
+  font-size: 13px;
+  color: #8b9a93;
+}
+
+.widgetForm {
+  width: 100%;
+  min-height: 180px;
+}
+
+.secureNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #8b9a93;
+}
+
+.secureNote svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  text-align: center;
+  color: #4a5c56;
+  font-size: 14px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.overlayVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.isReady :global(.wpwl-form-modern) {
+  animation: form-fade 0.25s ease both;
+}
+
+@keyframes form-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 280px;
+  text-align: center;
+  color: #4a5c56;
+  font-size: 14px;
+}
+
+.error p {
+  margin: 0;
+  color: #b42318;
+}
+
+.errorDetail {
+  margin-top: 8px !important;
+  font-size: 13px !important;
+  color: #8b9a93 !important;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(36, 178, 93, 0.15);
+  border-top-color: #24b25d;
+  animation: hyperpay-spin 0.8s linear infinite;
+}
+
+@keyframes hyperpay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,301 @@
+/* HyperPay — match Greenola app .field / .input layout */
+
+.hyperpay-widget-root {
+  --hp-green: #24b25d;
+  --hp-green-dark: #004e42;
+  --hp-ink: #0e1f1b;
+  --hp-ink-mute: #8b9a93;
+  --hp-line: #e8efe9;
+  --hp-radius: 16px;
+}
+
+/* HyperPay keeps a spin.js loader below the form until iframes finish */
+.hyperpay-widget-root .wpwl-wrapper-spinner,
+.hyperpay-widget-root .wpwl-spinner,
+.hyperpay-widget-root .wpwl-target,
+.hyperpay-widget-root [class*="spinner"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide Click to Pay, installments, and extra enrollment fields */
+.hyperpay-widget-root .wpwl-container-clickToPay,
+.hyperpay-widget-root .wpwl-form-clickToPay,
+.hyperpay-widget-root [class*="clickToPay"],
+.hyperpay-widget-root [class*="ClickToPay"],
+.hyperpay-widget-root [class*="src-"],
+.hyperpay-widget-root .wpwl-group-mobile,
+.hyperpay-widget-root .wpwl-group-customerMobile,
+.hyperpay-widget-root .wpwl-group-birthDate,
+.hyperpay-widget-root .wpwl-group-countryCode,
+.hyperpay-widget-root .wpwl-group-installment,
+.hyperpay-widget-root .wpwl-group-custom,
+.hyperpay-widget-root input[type="checkbox"],
+.hyperpay-widget-root .wpwl-checkbox {
+  display: none !important;
+}
+
+/* Card-only form — standard gateway layout */
+.hyperpay-widget-root .wpwl-form-card,
+.hyperpay-widget-root .wpwl-form-modern {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.hyperpay-widget-root .hp-card-brands {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.hyperpay-widget-root .hp-card-brands span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--hp-line);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4a5c56;
+  letter-spacing: 0.04em;
+}
+
+.hyperpay-widget-root .hp-secure-note {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--hp-ink-mute);
+}
+
+.hyperpay-widget-root .hp-secure-note svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-left: 4px;
+}
+
+/* Kill HyperPay table/float RTL layout → vertical fields */
+.hyperpay-widget-root .wpwl-form,
+.hyperpay-widget-root .wpwl-form-modern,
+.hyperpay-widget-root .wpwl-wrapper,
+.hyperpay-widget-root .wpwl-container,
+.hyperpay-widget-root .wpwl-sup-wrapper {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  max-width: 100% !important;
+  float: none !important;
+  width: 100% !important;
+}
+
+.hyperpay-widget-root .wpwl-form,
+.hyperpay-widget-root .wpwl-form-modern {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.hyperpay-widget-root .wpwl-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 3px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  float: none !important;
+  clear: both !important;
+}
+
+/* Brand icons only — hide dropdown + label */
+.hyperpay-widget-root .wpwl-group-brand {
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  margin-bottom: 2px !important;
+}
+
+.hyperpay-widget-root .wpwl-group-brand .wpwl-label,
+.hyperpay-widget-root .wpwl-group-brand select,
+.hyperpay-widget-root .wpwl-group-brand .wpwl-control,
+.hyperpay-widget-root .wpwl-group-brand .wpwl-wrapper {
+  display: none !important;
+}
+
+.hyperpay-widget-root .wpwl-brand,
+.hyperpay-widget-root .wpwl-brand-card {
+  margin: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  opacity: 0.55;
+  transform: scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hyperpay-widget-root .wpwl-brand-selected,
+.hyperpay-widget-root .wpwl-brand-active {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Labels above inputs — like app .field-label */
+.hyperpay-widget-root .wpwl-label {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 4px 0 0 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--hp-ink) !important;
+  line-height: 1.3 !important;
+  text-align: start !important;
+}
+
+/* Inputs — match app .input */
+.hyperpay-widget-root .wpwl-control,
+.hyperpay-widget-root input.wpwl-control,
+.hyperpay-widget-root select.wpwl-control {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1.5px solid var(--hp-line) !important;
+  border-radius: var(--hp-radius) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: var(--hp-ink) !important;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.hyperpay-widget-root .wpwl-control::placeholder {
+  color: var(--hp-ink-mute) !important;
+  font-weight: 400 !important;
+}
+
+.hyperpay-widget-root .wpwl-control:focus,
+.hyperpay-widget-root input.wpwl-control:focus {
+  outline: none !important;
+  border-color: var(--hp-green) !important;
+  box-shadow: 0 0 0 4px rgba(36, 178, 93, 0.12) !important;
+}
+
+/* Card number iframe */
+.hyperpay-widget-root .wpwl-control-iframe,
+.hyperpay-widget-root iframe.wpwl-control {
+  display: block !important;
+  width: 100% !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  border: 1.5px solid var(--hp-line) !important;
+  border-radius: var(--hp-radius) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Expiry + CVV side by side */
+.hyperpay-widget-root .hp-inline-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.hyperpay-widget-root .hp-inline-row .wpwl-group {
+  margin: 0 !important;
+}
+
+/* Hide CVV help icons */
+.hyperpay-widget-root .wpwl-icon,
+.hyperpay-widget-root .wpwl-icon-question,
+.hyperpay-widget-root .wpwl-hint-cvv {
+  display: none !important;
+}
+
+.hyperpay-widget-root .wpwl-hint,
+.hyperpay-widget-root .wpwl-text {
+  margin: 4px 4px 0 0 !important;
+  font-size: 12px !important;
+  color: var(--hp-ink-mute) !important;
+}
+
+/* Pay button — match app .cta */
+.hyperpay-widget-root .wpwl-button,
+.hyperpay-widget-root .wpwl-button-pay,
+.hyperpay-widget-root button.wpwl-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  margin: 6px 0 0 !important;
+  padding: 0 18px !important;
+  border: none !important;
+  border-radius: var(--hp-radius) !important;
+  background: linear-gradient(135deg, #24b25d 0%, #1fa052 100%) !important;
+  box-shadow: 0 8px 20px -6px rgba(36, 178, 93, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font: inherit !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.hyperpay-widget-root .wpwl-button:hover,
+.hyperpay-widget-root .wpwl-button-pay:hover {
+  filter: brightness(1.02);
+}
+
+.hyperpay-widget-root .wpwl-button:active,
+.hyperpay-widget-root .wpwl-button-pay:active {
+  transform: scale(0.98);
+}
+
+/* Apple Pay */
+.hyperpay-widget-root .wpwl-apple-pay-button,
+.hyperpay-widget-root .wpwl-group-APPLEPAY .wpwl-button {
+  background: #000 !important;
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Errors */
+.hyperpay-widget-root .wpwl-has-error .wpwl-control,
+.hyperpay-widget-root .wpwl-has-error iframe.wpwl-control {
+  border-color: #c83a3a !important;
+  box-shadow: 0 0 0 4px rgba(200, 58, 58, 0.1) !important;
+}
+
+.hyperpay-widget-root .wpwl-hint-error {
+  color: #c83a3a !important;
+}
+
+@media (max-width: 380px) {
+  .hyperpay-widget-root .hp-inline-row {
+    grid-template-columns: 1fr;
+  }
+}
