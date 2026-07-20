@@ -36,3 +36,5 @@ next-env.d.ts
 
 # conversion artifacts
 /extracted
+.vercel
+.env*

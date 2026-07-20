@@ -41,15 +41,22 @@ function removeNode(node: Element | null | undefined) {
   node?.remove();
 }
 
+function hideNode(node: Element | null | undefined) {
+  if (node instanceof HTMLElement) {
+    node.style.display = "none";
+    node.setAttribute("aria-hidden", "true");
+  }
+}
+
 function stripUnwantedWidgetFields(root: ParentNode) {
   root.querySelectorAll(UNWANTED_SELECTORS).forEach((node) => {
-    removeNode(node.closest(".wpwl-group") ?? node);
+    hideNode(node.closest(".wpwl-group") ?? node);
   });
 
   root.querySelectorAll(".wpwl-label").forEach((label) => {
     const text = label.textContent?.trim().toLowerCase() ?? "";
     if (UNWANTED_LABELS.some((item) => text.includes(item.toLowerCase()))) {
-      removeNode(label.closest(".wpwl-group"));
+      hideNode(label.closest(".wpwl-group"));
     }
   });
 
@@ -60,7 +67,7 @@ function stripUnwantedWidgetFields(root: ParentNode) {
       UNWANTED_TEXT_SNIPPETS.some((snippet) => text.includes(snippet)) ||
       (text.includes("i agree") && text.length > 40)
     ) {
-      removeNode(
+      hideNode(
         node.closest(".wpwl-group") ??
           node.closest(".wpwl-checkbox") ??
           node.closest("label") ??
@@ -69,20 +76,54 @@ function stripUnwantedWidgetFields(root: ParentNode) {
     }
   });
 
+  // Keep consent checkboxes in the DOM (HyperPay may require them),
+  // but auto-check and leave CSS to hide them.
   root.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-    const wrapper =
-      checkbox.closest(".wpwl-group") ??
-      checkbox.closest("label") ??
-      checkbox.parentElement;
-    removeNode(wrapper);
+    if (checkbox instanceof HTMLInputElement) {
+      checkbox.checked = true;
+      checkbox.required = false;
+      hideNode(
+        checkbox.closest(".wpwl-group") ??
+          checkbox.closest(".wpwl-checkbox") ??
+          checkbox.closest("label"),
+      );
+    }
   });
 
   root.querySelectorAll(".wpwl-container").forEach((container) => {
     const isCardContainer =
       container.classList.contains("wpwl-container-card") ||
       container.querySelector(".wpwl-form-card");
-    if (!isCardContainer) {
-      removeNode(container);
+    if (!isCardContainer && container instanceof HTMLElement) {
+      container.style.display = "none";
+    }
+  });
+}
+
+function forceLtrCardFields(root: ParentNode) {
+  const selectors = [
+    ".wpwl-group-cardNumber",
+    ".wpwl-group-expiry",
+    ".wpwl-group-cvv",
+    ".wpwl-group-cardHolder",
+    ".wpwl-control-cardNumber",
+    ".wpwl-control-expiry",
+    ".wpwl-control-cvv",
+    ".wpwl-control-cardHolder",
+    'input[name="card.number"]',
+    'input[name="card.expiry"]',
+    'input[name="card.cvv"]',
+    'input[name="card.holder"]',
+    "iframe.wpwl-control",
+  ].join(",");
+
+  root.querySelectorAll(selectors).forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+    node.setAttribute("dir", "ltr");
+    node.style.direction = "ltr";
+    node.style.unicodeBidi = "isolate";
+    if (node instanceof HTMLInputElement || node.tagName === "IFRAME") {
+      node.style.textAlign = "left";
     }
   });
 }
@@ -124,9 +165,11 @@ function enhanceWidgetDom(root: HTMLElement | null) {
     });
 
     stripUnwantedWidgetFields(form);
+    forceLtrCardFields(form);
   });
 
   stripUnwantedWidgetFields(root);
+  forceLtrCardFields(root);
   removeHyperPaySpinners(root);
 }
 
@@ -145,6 +188,7 @@ function observeWidgetCleanup(root: HTMLElement) {
     if (debounceId) clearTimeout(debounceId);
     debounceId = setTimeout(() => {
       stripUnwantedWidgetFields(root);
+      forceLtrCardFields(root);
       removeHyperPaySpinners(root);
     }, 80);
   });
@@ -165,6 +209,7 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
     requireCardHolder: true,
     showOneClickWidget: false,
     hideOtherPaymentButton: true,
+    paymentTarget: "_top",
     spinner: {
       lines: 0,
       length: 0,
@@ -188,6 +233,16 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
         observeWidgetCleanup(root);
       }
       onReady();
+    },
+    onBeforeSubmitCard: () => {
+      const root = document.querySelector(".hyperpay-widget-root");
+      root?.querySelectorAll('input[type="checkbox"]').forEach((node) => {
+        if (node instanceof HTMLInputElement) {
+          node.checked = true;
+          node.required = false;
+        }
+      });
+      return true;
     },
     onError: () => {
       onError();

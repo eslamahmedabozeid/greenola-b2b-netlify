@@ -190,6 +190,28 @@
   appearance: none;
 }
 
+/* Card digits must be LTR — page is RTL (lang=ar), which reverses numbers */
+.hyperpay-widget-root .wpwl-group-cardNumber,
+.hyperpay-widget-root .wpwl-group-expiry,
+.hyperpay-widget-root .wpwl-group-cvv,
+.hyperpay-widget-root .wpwl-group-cardHolder,
+.hyperpay-widget-root .wpwl-wrapper-cardNumber,
+.hyperpay-widget-root .wpwl-wrapper-expiry,
+.hyperpay-widget-root .wpwl-wrapper-cvv,
+.hyperpay-widget-root .wpwl-control-cardNumber,
+.hyperpay-widget-root .wpwl-control-expiry,
+.hyperpay-widget-root .wpwl-control-cvv,
+.hyperpay-widget-root .wpwl-control-cardHolder,
+.hyperpay-widget-root input[name="card.number"],
+.hyperpay-widget-root input[name="card.expiry"],
+.hyperpay-widget-root input[name="card.cvv"],
+.hyperpay-widget-root input[name="card.holder"],
+.hyperpay-widget-root iframe.wpwl-control {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  text-align: left !important;
+}
+
 .hyperpay-widget-root .wpwl-control::placeholder {
   color: var(--hp-ink-mute) !important;
   font-weight: 400 !important;

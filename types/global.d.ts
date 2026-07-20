@@ -15,6 +15,7 @@ declare global {
       requireCardHolder?: boolean;
       showOneClickWidget?: boolean;
       hideOtherPaymentButton?: boolean;
+      paymentTarget?: string;
       spinner?: {
         lines?: number;
         length?: number;
@@ -26,6 +27,7 @@ declare global {
       showPlaceholders?: boolean;
       labels?: Record<string, string>;
       onReady?: () => void;
+      onBeforeSubmitCard?: () => boolean;
       onError?: (error: { name?: string; message?: string }) => void;
     };
   }
