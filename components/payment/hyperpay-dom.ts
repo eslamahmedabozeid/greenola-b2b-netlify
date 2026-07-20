@@ -20,15 +20,11 @@ const UNWANTED_TEXT_SNIPPETS = [
 const UNWANTED_SELECTORS = [
   ".wpwl-container-clickToPay",
   ".wpwl-form-clickToPay",
-  '[class*="clickToPay"]',
-  '[class*="ClickToPay"]',
-  '[class*="src-"]',
   ".wpwl-group-mobile",
   ".wpwl-group-customerMobile",
   ".wpwl-group-birthDate",
   ".wpwl-group-countryCode",
   ".wpwl-group-installment",
-  ".wpwl-group-custom",
   'input[name*="installment"]',
   'input[name*="createRegistration"]',
   'input[name*="clickToPay"]',
@@ -37,32 +33,47 @@ const UNWANTED_SELECTORS = [
   'input[name*="termsAndConditions"]',
 ].join(",");
 
-function removeNode(node: Element | null | undefined) {
-  node?.remove();
-}
-
 function hideNode(node: Element | null | undefined) {
-  if (node instanceof HTMLElement) {
-    node.style.display = "none";
-    node.setAttribute("aria-hidden", "true");
+  if (!(node instanceof HTMLElement)) return;
+  // Never hide the card form itself or our shell UI.
+  if (
+    node.classList.contains("wpwl-form-card") ||
+    node.classList.contains("wpwl-form-modern") ||
+    node.classList.contains("paymentWidgets") ||
+    node.classList.contains("hyperpay-widget-root") ||
+    node.querySelector?.(
+      ".wpwl-group-cardNumber, .wpwl-control-cardNumber, .wpwl-button-pay",
+    )
+  ) {
+    return;
   }
+  node.style.display = "none";
+  node.setAttribute("aria-hidden", "true");
 }
 
 function stripUnwantedWidgetFields(root: ParentNode) {
-  root.querySelectorAll(UNWANTED_SELECTORS).forEach((node) => {
+  // Only touch HyperPay-rendered nodes, not our React chrome.
+  const scope =
+    root instanceof Element
+      ? root.querySelector(".wpwl-form, .wpwl-container-card") ?? root
+      : root;
+
+  scope.querySelectorAll(UNWANTED_SELECTORS).forEach((node) => {
     hideNode(node.closest(".wpwl-group") ?? node);
   });
 
-  root.querySelectorAll(".wpwl-label").forEach((label) => {
+  scope.querySelectorAll(".wpwl-label").forEach((label) => {
     const text = label.textContent?.trim().toLowerCase() ?? "";
     if (UNWANTED_LABELS.some((item) => text.includes(item.toLowerCase()))) {
       hideNode(label.closest(".wpwl-group"));
     }
   });
 
-  root.querySelectorAll("label, p, span, div").forEach((node) => {
+  // Use leaf-ish nodes only. Parent div textContent includes children and
+  // previously caused the whole card form wrapper to be hidden.
+  scope.querySelectorAll("label, p, span").forEach((node) => {
     const text = node.textContent?.trim().toLowerCase() ?? "";
-    if (!text) return;
+    if (!text || text.length > 280) return;
     if (
       UNWANTED_TEXT_SNIPPETS.some((snippet) => text.includes(snippet)) ||
       (text.includes("i agree") && text.length > 40)
@@ -70,15 +81,13 @@ function stripUnwantedWidgetFields(root: ParentNode) {
       hideNode(
         node.closest(".wpwl-group") ??
           node.closest(".wpwl-checkbox") ??
-          node.closest("label") ??
-          node,
+          node.closest("label"),
       );
     }
   });
 
-  // Keep consent checkboxes in the DOM (HyperPay may require them),
-  // but auto-check and leave CSS to hide them.
-  root.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+  // Keep consent checkboxes in the DOM (HyperPay may require them).
+  scope.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
     if (checkbox instanceof HTMLInputElement) {
       checkbox.checked = true;
       checkbox.required = false;
@@ -87,15 +96,6 @@ function stripUnwantedWidgetFields(root: ParentNode) {
           checkbox.closest(".wpwl-checkbox") ??
           checkbox.closest("label"),
       );
-    }
-  });
-
-  root.querySelectorAll(".wpwl-container").forEach((container) => {
-    const isCardContainer =
-      container.classList.contains("wpwl-container-card") ||
-      container.querySelector(".wpwl-form-card");
-    if (!isCardContainer && container instanceof HTMLElement) {
-      container.style.display = "none";
     }
   });
 }
@@ -147,7 +147,7 @@ function enhanceWidgetDom(root: HTMLElement | null) {
       });
 
     form.querySelectorAll(".wpwl-icon, .wpwl-icon-question").forEach((node) => {
-      node.remove();
+      (node as HTMLElement).style.display = "none";
     });
 
     const expiry = form.querySelector(".wpwl-group-expiry");
@@ -168,29 +168,35 @@ function enhanceWidgetDom(root: HTMLElement | null) {
     forceLtrCardFields(form);
   });
 
-  stripUnwantedWidgetFields(root);
   forceLtrCardFields(root);
   removeHyperPaySpinners(root);
 }
 
 function removeHyperPaySpinners(root: ParentNode) {
   root
-    .querySelectorAll(
-      ".wpwl-wrapper-spinner, .wpwl-spinner, .wpwl-target, [class*='spinner']",
-    )
-    .forEach((node) => removeNode(node));
+    .querySelectorAll(".wpwl-wrapper-spinner, .wpwl-spinner")
+    .forEach((node) => {
+      if (node instanceof HTMLElement) {
+        node.style.display = "none";
+      }
+    });
 }
 
 function observeWidgetCleanup(root: HTMLElement) {
   let debounceId: ReturnType<typeof setTimeout> | undefined;
+  let enhancing = false;
 
   const observer = new MutationObserver(() => {
+    if (enhancing) return;
     if (debounceId) clearTimeout(debounceId);
     debounceId = setTimeout(() => {
-      stripUnwantedWidgetFields(root);
-      forceLtrCardFields(root);
-      removeHyperPaySpinners(root);
-    }, 80);
+      enhancing = true;
+      try {
+        enhanceWidgetDom(root);
+      } finally {
+        enhancing = false;
+      }
+    }, 120);
   });
 
   observer.observe(root, { childList: true, subtree: true });
@@ -210,12 +216,6 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
     showOneClickWidget: false,
     hideOtherPaymentButton: true,
     paymentTarget: "_top",
-    spinner: {
-      lines: 0,
-      length: 0,
-      width: 0,
-      radius: 0,
-    },
     showLabels: true,
     showPlaceholders: true,
     labels: {

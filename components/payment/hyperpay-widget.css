@@ -9,31 +9,16 @@
   --hp-radius: 16px;
 }
 
-/* HyperPay keeps a spin.js loader below the form until iframes finish */
-.hyperpay-widget-root .wpwl-wrapper-spinner,
-.hyperpay-widget-root .wpwl-spinner,
-.hyperpay-widget-root .wpwl-target,
-.hyperpay-widget-root [class*="spinner"] {
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Hide Click to Pay, installments, and extra enrollment fields */
+/* Hide Click to Pay / installment extras — keep card form intact */
 .hyperpay-widget-root .wpwl-container-clickToPay,
 .hyperpay-widget-root .wpwl-form-clickToPay,
-.hyperpay-widget-root [class*="clickToPay"],
-.hyperpay-widget-root [class*="ClickToPay"],
-.hyperpay-widget-root [class*="src-"],
 .hyperpay-widget-root .wpwl-group-mobile,
 .hyperpay-widget-root .wpwl-group-customerMobile,
 .hyperpay-widget-root .wpwl-group-birthDate,
 .hyperpay-widget-root .wpwl-group-countryCode,
 .hyperpay-widget-root .wpwl-group-installment,
-.hyperpay-widget-root .wpwl-group-custom,
+.hyperpay-widget-root .wpwl-wrapper-spinner,
+.hyperpay-widget-root .wpwl-spinner,
 .hyperpay-widget-root input[type="checkbox"],
 .hyperpay-widget-root .wpwl-checkbox {
   display: none !important;

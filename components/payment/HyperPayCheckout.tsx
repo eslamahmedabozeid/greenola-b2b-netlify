@@ -94,6 +94,7 @@ export function HyperPayCheckout({
     let cancelled = false;
 
     function bootstrapWidget(resolved: ResolvedBrands) {
+      if (cancelled) return;
       setBrandResolution(resolved);
       configureWpwlOptions(
         () => {
@@ -111,7 +112,6 @@ export function HyperPayCheckout({
     async function verifyBrands() {
       setStatus("verifying");
       setOptionsReady(false);
-      cleanupHyperPayWidget(formId);
 
       try {
         const params = new URLSearchParams({ checkoutId });
@@ -144,7 +144,7 @@ export function HyperPayCheckout({
 
     return () => {
       cancelled = true;
-      cleanupHyperPayWidget(formId);
+      // Don't wipe the form on React Strict Mode remount — only drop options flag.
       setOptionsReady(false);
     };
   }, [checkoutId, formId, method, mounted, supportedBrands]);
@@ -162,12 +162,11 @@ export function HyperPayCheckout({
   const handleScriptReady = useCallback(() => {
     markWidgetReady();
 
-    // HyperPay may render the card form after the script onReady event.
     const root = document.querySelector(".hyperpay-widget-root");
     if (!root) return;
 
     const observer = new MutationObserver(() => {
-      if (root.querySelector(".wpwl-form-card, .wpwl-form-modern")) {
+      if (root.querySelector(".wpwl-form-card, .wpwl-button-pay, .wpwl-group-cardNumber")) {
         markWidgetReady();
         observer.disconnect();
       }
@@ -176,9 +175,20 @@ export function HyperPayCheckout({
     observer.observe(root, { childList: true, subtree: true });
 
     window.setTimeout(() => {
-      markWidgetReady();
       observer.disconnect();
-    }, 1500);
+      const hasForm = Boolean(
+        root.querySelector(
+          ".wpwl-form-card, .wpwl-button-pay, .wpwl-group-cardNumber",
+        ),
+      );
+      if (hasForm) {
+        markWidgetReady();
+      } else {
+        setStatus((current) =>
+          current === "unsupported" ? current : "error",
+        );
+      }
+    }, 8000);
   }, [markWidgetReady]);
 
   const handleScriptError = useCallback(() => {
