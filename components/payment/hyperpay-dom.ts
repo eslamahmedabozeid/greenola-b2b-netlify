@@ -1,103 +1,74 @@
-const UNWANTED_LABELS = [
-  "كود الدولة",
-  "رقم الجوال",
-  "تاريخ الميلاد",
-  "country code",
-  "mobile",
-  "birth",
+/** Only these HyperPay groups stay visible — everything else is hidden. */
+const ALLOWED_GROUP_SUFFIXES = [
+  "brand",
+  "cardNumber",
+  "expiry",
+  "cvv",
+  "cardHolder",
+  "submit",
 ];
 
-const UNWANTED_TEXT_SNIPPETS = [
-  "click to pay",
-  "share my card details",
-  "billing address and email",
-  "installment plan",
-  "terms and conditions to proceed",
-  "enroll in click to pay",
-  "scheme to protect",
-];
+function isAllowedGroup(group: Element): boolean {
+  if (!(group instanceof HTMLElement)) return false;
 
-const UNWANTED_SELECTORS = [
-  ".wpwl-container-clickToPay",
-  ".wpwl-form-clickToPay",
-  ".wpwl-group-mobile",
-  ".wpwl-group-customerMobile",
-  ".wpwl-group-birthDate",
-  ".wpwl-group-countryCode",
-  ".wpwl-group-installment",
-  'input[name*="installment"]',
-  'input[name*="createRegistration"]',
-  'input[name*="clickToPay"]',
-  'input[name*="ClickToPay"]',
-  'input[name*="schemeConsent"]',
-  'input[name*="termsAndConditions"]',
-].join(",");
+  if (
+    group.querySelector(
+      ".wpwl-button-pay, .wpwl-control-cardNumber, input[name='card.number'], input[name='card.expiry'], input[name='card.cvv'], input[name='card.holder']",
+    )
+  ) {
+    return true;
+  }
+
+  return ALLOWED_GROUP_SUFFIXES.some((suffix) =>
+    group.classList.contains(`wpwl-group-${suffix}`),
+  );
+}
 
 function hideNode(node: Element | null | undefined) {
   if (!(node instanceof HTMLElement)) return;
-  // Never hide the card form itself or our shell UI.
-  if (
-    node.classList.contains("wpwl-form-card") ||
-    node.classList.contains("wpwl-form-modern") ||
-    node.classList.contains("paymentWidgets") ||
-    node.classList.contains("hyperpay-widget-root") ||
-    node.querySelector?.(
-      ".wpwl-group-cardNumber, .wpwl-control-cardNumber, .wpwl-button-pay",
-    )
-  ) {
-    return;
-  }
-  node.style.display = "none";
+  node.style.setProperty("display", "none", "important");
   node.setAttribute("aria-hidden", "true");
+  node.setAttribute("data-hp-hidden", "1");
 }
 
+function prepareHiddenCheckbox(checkbox: Element) {
+  if (!(checkbox instanceof HTMLInputElement)) return;
+  checkbox.checked = true;
+  checkbox.required = false;
+  checkbox.setAttribute("aria-hidden", "true");
+}
+
+/**
+ * Card-only gateway: keep brand / number / expiry / cvv / holder / pay.
+ * Auto-check + hide Click to Pay, mobile, DOB, installment consents.
+ */
 function stripUnwantedWidgetFields(root: ParentNode) {
-  // Only touch HyperPay-rendered nodes, not our React chrome.
-  const scope =
-    root instanceof Element
-      ? root.querySelector(".wpwl-form, .wpwl-container-card") ?? root
-      : root;
+  const forms = root.querySelectorAll(".wpwl-form-card, .wpwl-form");
 
-  scope.querySelectorAll(UNWANTED_SELECTORS).forEach((node) => {
-    hideNode(node.closest(".wpwl-group") ?? node);
+  forms.forEach((form) => {
+    form.querySelectorAll('input[type="checkbox"]').forEach(prepareHiddenCheckbox);
+
+    form.querySelectorAll(".wpwl-group").forEach((group) => {
+      if (isAllowedGroup(group)) return;
+
+      group.querySelectorAll('input[type="checkbox"]').forEach(prepareHiddenCheckbox);
+      hideNode(group);
+    });
   });
 
-  scope.querySelectorAll(".wpwl-label").forEach((label) => {
-    const text = label.textContent?.trim().toLowerCase() ?? "";
-    if (UNWANTED_LABELS.some((item) => text.includes(item.toLowerCase()))) {
-      hideNode(label.closest(".wpwl-group"));
-    }
+  // Click to Pay / other method containers (siblings of the card form)
+  root.querySelectorAll(".wpwl-container").forEach((container) => {
+    const isCard =
+      container.classList.contains("wpwl-container-card") ||
+      Boolean(container.querySelector(".wpwl-form-card, .wpwl-group-cardNumber"));
+    if (!isCard) hideNode(container);
   });
 
-  // Use leaf-ish nodes only. Parent div textContent includes children and
-  // previously caused the whole card form wrapper to be hidden.
-  scope.querySelectorAll("label, p, span").forEach((node) => {
-    const text = node.textContent?.trim().toLowerCase() ?? "";
-    if (!text || text.length > 280) return;
-    if (
-      UNWANTED_TEXT_SNIPPETS.some((snippet) => text.includes(snippet)) ||
-      (text.includes("i agree") && text.length > 40)
-    ) {
-      hideNode(
-        node.closest(".wpwl-group") ??
-          node.closest(".wpwl-checkbox") ??
-          node.closest("label"),
-      );
-    }
-  });
-
-  // Keep consent checkboxes in the DOM (HyperPay may require them).
-  scope.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-    if (checkbox instanceof HTMLInputElement) {
-      checkbox.checked = true;
-      checkbox.required = false;
-      hideNode(
-        checkbox.closest(".wpwl-group") ??
-          checkbox.closest(".wpwl-checkbox") ??
-          checkbox.closest("label"),
-      );
-    }
-  });
+  root
+    .querySelectorAll(
+      ".wpwl-container-clickToPay, .wpwl-form-clickToPay, .wpwl-form-virtualAccount",
+    )
+    .forEach((node) => hideNode(node));
 }
 
 function forceLtrCardFields(root: ParentNode) {
@@ -168,6 +139,7 @@ function enhanceWidgetDom(root: HTMLElement | null) {
     forceLtrCardFields(form);
   });
 
+  stripUnwantedWidgetFields(root);
   forceLtrCardFields(root);
   removeHyperPaySpinners(root);
 }
@@ -237,10 +209,7 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
     onBeforeSubmitCard: () => {
       const root = document.querySelector(".hyperpay-widget-root");
       root?.querySelectorAll('input[type="checkbox"]').forEach((node) => {
-        if (node instanceof HTMLInputElement) {
-          node.checked = true;
-          node.required = false;
-        }
+        prepareHiddenCheckbox(node);
       });
       return true;
     },

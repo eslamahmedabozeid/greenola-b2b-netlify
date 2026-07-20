@@ -9,18 +9,31 @@
   --hp-radius: 16px;
 }
 
-/* Hide Click to Pay / installment extras — keep card form intact */
+/* Card-only: hide Click to Pay, mobile, DOB, installments, consents */
 .hyperpay-widget-root .wpwl-container-clickToPay,
 .hyperpay-widget-root .wpwl-form-clickToPay,
+.hyperpay-widget-root .wpwl-form-virtualAccount,
+.hyperpay-widget-root .wpwl-container:not(.wpwl-container-card),
 .hyperpay-widget-root .wpwl-group-mobile,
 .hyperpay-widget-root .wpwl-group-customerMobile,
 .hyperpay-widget-root .wpwl-group-birthDate,
+.hyperpay-widget-root .wpwl-group-birthdate,
 .hyperpay-widget-root .wpwl-group-countryCode,
+.hyperpay-widget-root .wpwl-group-country,
 .hyperpay-widget-root .wpwl-group-installment,
+.hyperpay-widget-root .wpwl-group-installments,
+.hyperpay-widget-root .wpwl-group-custom,
 .hyperpay-widget-root .wpwl-wrapper-spinner,
 .hyperpay-widget-root .wpwl-spinner,
 .hyperpay-widget-root input[type="checkbox"],
-.hyperpay-widget-root .wpwl-checkbox {
+.hyperpay-widget-root .wpwl-checkbox,
+.hyperpay-widget-root [data-hp-hidden="1"] {
+  display: none !important;
+}
+
+/* Whitelist visible card groups only */
+.hyperpay-widget-root .wpwl-form-card > .wpwl-group:not(.wpwl-group-brand):not(.wpwl-group-cardNumber):not(.wpwl-group-expiry):not(.wpwl-group-cvv):not(.wpwl-group-cardHolder):not(.wpwl-group-submit),
+.hyperpay-widget-root .wpwl-form-modern > .wpwl-group:not(.wpwl-group-brand):not(.wpwl-group-cardNumber):not(.wpwl-group-expiry):not(.wpwl-group-cvv):not(.wpwl-group-cardHolder):not(.wpwl-group-submit) {
   display: none !important;
 }
 
