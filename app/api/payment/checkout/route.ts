@@ -4,7 +4,12 @@ import {
   type CheckoutResponse,
   extractCheckoutSession,
 } from "@/lib/payment/checkout";
-import { resolveBackendApiKey, resolveB2BToken } from "@/lib/payment/env";
+import {
+  getCheckoutAuthConfigError,
+  isCheckoutAuthConfigured,
+  resolveBackendApiKey,
+  resolveB2BToken,
+} from "@/lib/payment/env";
 
 const BACKEND_URL =
   process.env.GREENOLA_BACKEND_URL ??
@@ -56,15 +61,9 @@ function validateBody(body: CheckoutRequestBody): string | null {
 }
 
 export async function POST(request: Request) {
-  const apiKey = resolveBackendApiKey();
-  const b2bToken = resolveB2BToken();
-
-  if (!apiKey || !b2bToken) {
+  if (!isCheckoutAuthConfigured()) {
     return NextResponse.json(
-      {
-        error:
-          "Checkout auth not configured. Set GREENOLA_API_KEY and GREENOLA_B2B_TOKEN in .env.local, then restart the dev server.",
-      },
+      { error: getCheckoutAuthConfigError() },
       { status: 503 },
     );
   }
