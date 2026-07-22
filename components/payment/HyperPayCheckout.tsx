@@ -9,7 +9,11 @@ import {
   resolveBrandsForCheckout,
 } from "@/lib/payment/hyperpay";
 import type { ResolvedBrands } from "@/lib/payment/brands";
-import { configureWpwlOptions, enhanceWidgetDom } from "./hyperpay-dom";
+import {
+  configureWpwlOptions,
+  enhanceWidgetDom,
+  type PaymentExecutionContext,
+} from "./hyperpay-dom";
 import styles from "./hyperpay-checkout.module.css";
 import "./hyperpay-widget.css";
 
@@ -69,9 +73,15 @@ export function HyperPayCheckout({
   );
   const [optionsReady, setOptionsReady] = useState(false);
   const [scriptNonce, setScriptNonce] = useState(0);
+  const [executionContext, setExecutionContext] =
+    useState<PaymentExecutionContext | null>(null);
 
   const scriptSrc = buildHyperPayScriptUrl(checkoutId);
-  const formAction = buildPaymentCallbackUrl(callbackPath, { orderId, amount });
+  const formAction = useMemo(() => {
+    const relative = buildPaymentCallbackUrl(callbackPath, { orderId, amount });
+    if (typeof window === "undefined") return relative;
+    return buildPaymentCallbackUrl(callbackPath, { orderId, amount }, window.location.origin);
+  }, [callbackPath, orderId, amount]);
 
   const fallbackBrands = useMemo(() => {
     if (brands?.trim()) {
@@ -91,12 +101,30 @@ export function HyperPayCheckout({
   useEffect(() => {
     if (!mounted || !checkoutId) return;
 
+    try {
+      const raw = sessionStorage.getItem("greenola_payment_execution");
+      const stored = raw ? (JSON.parse(raw) as PaymentExecutionContext) : null;
+      setExecutionContext({
+        checkoutId,
+        orderId,
+        billing: stored?.billing,
+        customer: stored?.customer,
+      });
+    } catch {
+      setExecutionContext({ checkoutId, orderId });
+    }
+  }, [checkoutId, mounted, orderId]);
+
+  useEffect(() => {
+    if (!mounted || !checkoutId || !executionContext) return;
+
     let cancelled = false;
 
     function bootstrapWidget(resolved: ResolvedBrands) {
-      if (cancelled) return;
+      if (cancelled || !executionContext) return;
       setBrandResolution(resolved);
       configureWpwlOptions(
+        executionContext,
         () => {
           if (!cancelled) setStatus("ready");
         },
@@ -147,7 +175,7 @@ export function HyperPayCheckout({
       // Don't wipe the form on React Strict Mode remount — only drop options flag.
       setOptionsReady(false);
     };
-  }, [checkoutId, formId, method, mounted, supportedBrands]);
+  }, [checkoutId, executionContext, formId, method, mounted, supportedBrands]);
 
   const markWidgetReady = useCallback(() => {
     const root = document.querySelector(".hyperpay-widget-root");

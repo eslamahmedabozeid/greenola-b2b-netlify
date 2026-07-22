@@ -28,12 +28,19 @@ export function extractCheckoutId(
 export function buildPaymentCallbackUrl(
   callbackPath = "/api/payment/callback",
   params?: { orderId?: string; amount?: string },
+  origin?: string,
 ): string {
   const search = new URLSearchParams();
   if (params?.orderId) search.set("orderId", params.orderId);
   if (params?.amount) search.set("amount", params.amount);
   const query = search.toString();
-  return query ? `${callbackPath}?${query}` : callbackPath;
+  const path = query ? `${callbackPath}?${query}` : callbackPath;
+
+  if (origin) {
+    return new URL(path, origin.endsWith("/") ? origin : `${origin}/`).toString();
+  }
+
+  return path;
 }
 
 /** @deprecated Use buildHyperPayScriptUrl instead */

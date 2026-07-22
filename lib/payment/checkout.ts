@@ -10,9 +10,16 @@ export type PackageSelection = {
   package_text: string;
   variation_text: string;
   duration_text: string;
-  package_price: number;
-  vat_amount: number;
-  final_amount: number;
+  package_price: number | string;
+  vat_amount: number | string;
+  final_amount: number | string;
+};
+
+export type CustomerInfo = {
+  given_name: string;
+  surname: string;
+  email: string;
+  mobile_number: string;
 };
 
 export type DeliveryDetails = {
@@ -23,10 +30,25 @@ export type DeliveryDetails = {
   notes: string;
 };
 
+export type BillingInfo = {
+  street1: string;
+  city: string;
+  state?: string;
+  country: string;
+  postcode?: string;
+};
+
 export type CheckoutRequestBody = {
   company_info: CompanyInfo;
   package_selection: PackageSelection;
   delivery_details: DeliveryDetails;
+  payment_method?: string;
+  shopper_result_url?: string;
+  shopperResultUrl?: string;
+  billing_info?: BillingInfo;
+  customer_info?: CustomerInfo;
+  currency?: string;
+  payment_type?: string;
 };
 
 export type CheckoutSessionData = {

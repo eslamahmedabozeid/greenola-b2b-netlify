@@ -8,6 +8,24 @@ const ALLOWED_GROUP_SUFFIXES = [
   "submit",
 ];
 
+type PaymentExecutionContext = {
+  checkoutId: string;
+  orderId?: string;
+  billing?: {
+    street1?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postcode?: string;
+  };
+  customer?: {
+    givenName?: string;
+    surname?: string;
+    email?: string;
+    mobile?: string;
+  };
+};
+
 function isAllowedGroup(group: Element): boolean {
   if (!(group instanceof HTMLElement)) return false;
 
@@ -38,6 +56,98 @@ function prepareHiddenCheckbox(checkbox: Element) {
   checkbox.setAttribute("aria-hidden", "true");
 }
 
+async function postExecutionLog(payload: Record<string, unknown>) {
+  try {
+    await fetch("/api/payment/execution-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+  } catch {
+    // Best-effort client logging only.
+  }
+}
+
+let paymentFormObserverInstalled = false;
+
+/**
+ * HyperPay card payments use native HTML form POST (form.submit()), not fetch/XHR.
+ * See oppwa static.min.js: ge.submitForm -> e.submit(), action=ge.endPoint.
+ */
+function installPaymentFormSubmitObserver(ctx: PaymentExecutionContext) {
+  if (paymentFormObserverInstalled) return;
+  paymentFormObserverInstalled = true;
+
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      if (!form.classList.contains("wpwl-form-card") && !form.matches('[data-action="submit-payment-card"]')) {
+        return;
+      }
+
+      void postExecutionLog({
+        phase: "widget.formSubmit",
+        checkoutId: ctx.checkoutId,
+        orderId: ctx.orderId,
+        method: form.method,
+        formAction: form.action,
+        formTarget: form.target,
+        fieldNames: collectFormFieldNames(form),
+        note: "Native HTML form POST to HyperPay — inspect this URL in DevTools Network (Doc type, not XHR)",
+      });
+    },
+    true,
+  );
+}
+
+function injectExecutionFields(
+  form: HTMLFormElement,
+  ctx: PaymentExecutionContext,
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+
+  if (ctx.billing) {
+    if (ctx.billing.street1) fields["billing.street1"] = ctx.billing.street1;
+    if (ctx.billing.city) fields["billing.city"] = ctx.billing.city;
+    if (ctx.billing.state) fields["billing.state"] = ctx.billing.state;
+    if (ctx.billing.country) fields["billing.country"] = ctx.billing.country;
+    if (ctx.billing.postcode) fields["billing.postcode"] = ctx.billing.postcode;
+  }
+
+  if (ctx.customer) {
+    if (ctx.customer.givenName) fields["customer.givenName"] = ctx.customer.givenName;
+    if (ctx.customer.surname) fields["customer.surname"] = ctx.customer.surname;
+    if (ctx.customer.email) fields["customer.email"] = ctx.customer.email;
+    if (ctx.customer.mobile) fields["customer.mobile"] = ctx.customer.mobile;
+  }
+
+  for (const [name, value] of Object.entries(fields)) {
+    let input = form.querySelector(
+      `input[name="${CSS.escape(name)}"]`,
+    ) as HTMLInputElement | null;
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    input.value = value;
+  }
+
+  return fields;
+}
+
+function collectFormFieldNames(form: Element): string[] {
+  return Array.from(form.querySelectorAll("input, select, textarea"))
+    .map((node) => (node as HTMLInputElement).name)
+    .filter(Boolean);
+}
+
 /**
  * Card-only gateway: keep brand / number / expiry / cvv / holder / pay.
  * Auto-check + hide Click to Pay, mobile, DOB, installment consents.
@@ -56,7 +166,6 @@ function stripUnwantedWidgetFields(root: ParentNode) {
     });
   });
 
-  // Click to Pay / other method containers (siblings of the card form)
   root.querySelectorAll(".wpwl-container").forEach((container) => {
     const isCard =
       container.classList.contains("wpwl-container-card") ||
@@ -178,7 +287,13 @@ function observeWidgetCleanup(root: HTMLElement) {
   };
 }
 
-function configureWpwlOptions(onReady: () => void, onError: () => void) {
+function configureWpwlOptions(
+  ctx: PaymentExecutionContext,
+  onReady: () => void,
+  onError: () => void,
+) {
+  installPaymentFormSubmitObserver(ctx);
+
   window.wpwlOptions = {
     style: "plain",
     locale: "ar",
@@ -202,8 +317,24 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
       const root = document.querySelector(".hyperpay-widget-root");
       if (root instanceof HTMLElement) {
         enhanceWidgetDom(root);
+
+        root.querySelectorAll("form.paymentWidgets, .wpwl-form").forEach((node) => {
+          if (node instanceof HTMLFormElement) {
+            const hiddenFields = injectExecutionFields(node, ctx);
+            void postExecutionLog({
+              phase: "widget.ready",
+              checkoutId: ctx.checkoutId,
+              orderId: ctx.orderId,
+              formAction: node.action,
+              fieldNames: collectFormFieldNames(node),
+              hiddenFields,
+            });
+          }
+        });
+
         observeWidgetCleanup(root);
       }
+
       onReady();
     },
     onBeforeSubmitCard: () => {
@@ -211,9 +342,31 @@ function configureWpwlOptions(onReady: () => void, onError: () => void) {
       root?.querySelectorAll('input[type="checkbox"]').forEach((node) => {
         prepareHiddenCheckbox(node);
       });
+
+      const forms = root?.querySelectorAll("form.paymentWidgets, .wpwl-form") ?? [];
+      forms.forEach((node) => {
+        if (!(node instanceof HTMLFormElement)) return;
+        const hiddenFields = injectExecutionFields(node, ctx);
+        void postExecutionLog({
+          phase: "widget.beforeSubmit",
+          checkoutId: ctx.checkoutId,
+          orderId: ctx.orderId,
+          formAction: node.action,
+          fieldNames: collectFormFieldNames(node),
+          hiddenFields,
+          note: "Fields present immediately before HyperPay native form POST (onBeforeSubmitCard)",
+        });
+      });
+
       return true;
     },
-    onError: () => {
+    onError: (error: unknown) => {
+      void postExecutionLog({
+        phase: "widget.error",
+        checkoutId: ctx.checkoutId,
+        orderId: ctx.orderId,
+        error,
+      });
       onError();
     },
   };
@@ -223,4 +376,5 @@ export {
   configureWpwlOptions,
   enhanceWidgetDom,
   stripUnwantedWidgetFields,
+  type PaymentExecutionContext,
 };
